@@ -137,8 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (correctlyFlaggedMines === numMines && revealedCells === ((gridSize * gridSize) - numMines)) {
       endGame(true);
     }
-  }
-  This 
+  } 
 
   function revealMines() {
     const cells = gameGrid.getElementsByTagName('td');
@@ -148,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
-
 });
 
 function placeMines(numberOfMines) {
