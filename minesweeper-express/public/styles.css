@@ -1,0 +1,52 @@
+#game-grid {
+  border-collapse: collapse;
+}
+
+#game-grid td {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #ccc;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  background-color: lightgrey;
+}
+
+#game-grid td.flagged {
+  background-color: red;
+  color: red;
+}
+
+#game-grid td.mine {
+  background-color: lightgrey;
+}
+
+#game-grid td.adjacent {
+  background-color: lightgrey;
+}
+
+#game-grid td.revealed {
+  background-color: white;
+  border: 1px solid #ddd;
+  pointer-events: none;
+}
+
+.mine-count {
+  color: lightgrey;
+}
+
+.mine-count.revealed {
+  color: blue;
+}
+
+.message{
+  font-family: 'Times New Roman', Times, serif;
+  font-size: x-large;
+}
+
+image
+{
+  width: 30px;
+  height: 30px;
+}
