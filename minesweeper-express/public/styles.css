@@ -1,10 +1,12 @@
 #game-grid {
+  width: 75vh; /* Set the game board's width to 95% of the viewport height */
+  height: 75vh; /* Set the game board's height to 95% of the viewport height */
   border-collapse: collapse;
+  margin: 0 auto;
 }
 
 #game-grid td {
-  width: 30px;
-  height: 30px;
+  width: 3%; /* Adjust the width of each cell */
   border: 1px solid #ccc;
   text-align: center;
   vertical-align: middle;
@@ -40,13 +42,63 @@
   color: blue;
 }
 
-.message{
-  font-family: 'Times New Roman', Times, serif;
-  font-size: x-large;
-}
-
 image
 {
   width: 30px;
   height: 30px;
+}
+
+button
+{
+  margin: 0 auto; 
+  margin-bottom: 20px;
+}
+
+h1
+{
+  font-size: xx-large;
+  font: bold;
+  text-align: center;
+}
+
+h2
+{
+  font-size: medium;
+  font: italic, bolder;
+  text-align: center;
+}
+
+.modal {
+  display: block; 
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.modal button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 20px auto;
+  padding: 20px 40px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.modal button:hover {
+  background-color: #2980b9;
+}
+
+.modal button:focus {
+  outline: none;
 }

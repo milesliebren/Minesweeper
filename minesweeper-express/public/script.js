@@ -1,52 +1,140 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const gridSize = 25;
-  const gameGrid = document.getElementById('game-grid');
-  const numMines = 10;
   let gameEnded = false;
+  const gridSize = 25;
+  let numMines;
+  const gameGrid = document.getElementById('game-grid');
+  const newGameBtn = document.getElementById('new-game');
 
-  // Generate the table grid
-  for (let i = 0; i < gridSize; i++) {
-    const row = document.createElement('tr');
-    for (let j = 0; j < gridSize; j++) {
-      const cell = document.createElement('td');
-      row.appendChild(cell);
-      cell.addEventListener('contextmenu', function (e) {
-        e.preventDefault(); // Prevent the default context menu
-        if (!gameEnded) {
-          cell.classList.toggle('flagged');
-          if (cell.classList.contains('flagged')) {
-            cell.style.backgroundColor = 'red'; // Change background color to red when flagged
-            if (cell.classList.contains('adjacent')) {
-              const mineCountTag = cell.querySelector('.mine-count');
-              mineCountTag.style.color = 'red'; // Change text color to red when flagged
-            }
-          } else {
-            cell.style.backgroundColor = ''; // Reset background color when unflagged
-            if (cell.classList.contains('adjacent')) {
-              const mineCountTag = cell.querySelector('.mine-count');
-              mineCountTag.style.color = ''; // Reset text color when unflagged
-            }
-          }
-          checkWinCondition(); // Check the win condition after each flag operation
-        }
-      });
-
-      cell.addEventListener('click', function (e) {
-        e.preventDefault(); // Prevent default behavior (for cells with context menu)
-        if (!gameEnded) {
-          if (cell.classList.contains('mine')) {
-            endGame(false);
-            revealMines();
-          } else if (!cell.classList.contains('revealed')) {
-            revealCell(cell);
-          }
-        }
-      });
+  // Function to remove the existing grid
+  function removeGrid() {
+    while (gameGrid.firstChild) {
+      gameGrid.removeChild(gameGrid.firstChild);
     }
-    gameGrid.appendChild(row);
   }
 
-  placeMines(numMines);
+  // Function to create a modal dialog with level buttons
+  function createLevelModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+
+    const easyBtn = document.createElement('button');
+    easyBtn.textContent = 'Easy';
+    easyBtn.addEventListener('click', function () {
+      startGame('easy');
+      modal.style.display = 'none';
+      newGameBtn.style.display = 'block'; // Display the "New Game" button
+    });
+
+    const mediumBtn = document.createElement('button');
+    mediumBtn.textContent = 'Medium';
+    mediumBtn.addEventListener('click', function () {
+      startGame('medium');
+      modal.style.display = 'none';
+      newGameBtn.style.display = 'block'; // Display the "New Game" button
+    });
+
+    const hardBtn = document.createElement('button');
+    hardBtn.textContent = 'Hard';
+    hardBtn.addEventListener('click', function () {
+      startGame('hard');
+      modal.style.display = 'none';
+      newGameBtn.style.display = 'block'; // Display the "New Game" button
+    });
+
+    modal.appendChild(easyBtn);
+    modal.appendChild(mediumBtn);
+    modal.appendChild(hardBtn);
+
+    return modal;
+  }
+
+  // Function to display the level modal
+  function displayLevelModal() {
+    const modal = createLevelModal();
+    document.body.appendChild(modal);
+    newGameBtn.style.display = 'none'; // Hide the "New Game" button
+  }
+
+  // Function to remove the modal
+  function removeModal() {
+    const modal = document.querySelector('.modal');
+    if (modal) {
+      modal.remove();
+    }
+  }
+
+  // Display the level modal when the page loads
+  displayLevelModal();
+
+  function startGame(level) {
+    removeModal(); // Remove the level selection modal
+    removeGrid(); // Remove the existing grid
+    switch (level) {
+      case 'easy':
+        numMines = 50;
+        break;
+      case 'medium':
+        numMines = 75;
+        break;
+      case 'hard':
+        numMines = 100;
+        break;
+      default:
+        numMines = 25;
+    }
+    generateGrid();
+    placeMines(numMines);
+  }
+
+  // Add a click event listener to the "New Game" button
+  newGameBtn.addEventListener('click', function () {
+    newGameBtn.style.display = 'none'; // Hide the "New Game" button
+    displayLevelModal(); // Display the level selection modal
+  });
+
+  function generateGrid()
+  {
+    for (let i = 0; i < gridSize; i++) {
+      const row = document.createElement('tr');
+      for (let j = 0; j < gridSize; j++) {
+        const cell = document.createElement('td');
+        row.appendChild(cell);
+        cell.addEventListener('contextmenu', function (e) {
+          e.preventDefault(); // Prevent the default context menu
+          if (!gameEnded) {
+            cell.classList.toggle('flagged');
+            if (cell.classList.contains('flagged')) {
+              cell.style.backgroundColor = 'red'; // Change background color to red when flagged
+              if (cell.classList.contains('adjacent')) {
+                const mineCountTag = cell.querySelector('.mine-count');
+                mineCountTag.style.color = 'red'; // Change text color to red when flagged
+              }
+            } else {
+              cell.style.backgroundColor = ''; // Reset background color when unflagged
+              if (cell.classList.contains('adjacent')) {
+                const mineCountTag = cell.querySelector('.mine-count');
+                mineCountTag.style.color = ''; // Reset text color when unflagged
+              }
+            }
+            checkWinCondition(); // Check the win condition after each flag operation
+          }
+        });
+
+        cell.addEventListener('click', function (e) {
+          e.preventDefault(); // Prevent default behavior (for cells with context menu)
+          if (!gameEnded) {
+            if (cell.classList.contains('mine')) {
+              endGame(false);
+              revealMines();
+            } else if (!cell.classList.contains('revealed')) {
+              revealCell(cell);
+            }
+          }
+        });
+      }
+      gameGrid.appendChild(row);
+    }
+  }
 
   function revealCell(cell) {
     if (!cell.classList.contains('revealed') && !cell.classList.contains('flagged')) {
@@ -141,9 +229,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function revealMines() {
     const cells = gameGrid.getElementsByTagName('td');
+    const bombImageURL = 'https://png.pngtree.com/png-vector/20191113/ourmid/pngtree-retro-bomb-icon-cartoon-style-png-image_1965877.jpg';
+  
     for (let cell of cells) {
       if (cell.classList.contains('mine')) {
-        cell.style.backgroundColor = 'black';
+        cell.style.backgroundImage = `url(${bombImageURL})`;
+        cell.style.backgroundSize = 'cover';
+        cell.innerHTML = ''; // Clear any mine count tags
       }
     }
   }
