@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let numberOfHints = 3; // Add this variable for hint counter
   const gameGrid = document.getElementById('game-grid');
   const newGameBtn = document.getElementById('new-game');
+  const mongoose = require("mongoose");
 
   // Function to remove the existing grid
   function removeGrid() {
