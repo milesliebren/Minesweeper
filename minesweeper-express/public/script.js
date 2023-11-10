@@ -104,13 +104,17 @@ document.addEventListener('DOMContentLoaded', function () {
           if (!gameEnded) {
             cell.classList.toggle('flagged');
             if (cell.classList.contains('flagged')) {
-              cell.style.backgroundColor = 'red'; // Change background color to red when flagged
+              const flagImageURL = 'https://static.vecteezy.com/system/resources/previews/010/966/261/original/red-flag-cartoon-free-vector.jpg';
+              cell.style.backgroundImage = `url(${flagImageURL})`; // Change image to flag when flagged
+              cell.style.backgroundSize = 'cover';
               if (cell.classList.contains('adjacent')) {
                 const mineCountTag = cell.querySelector('.mine-count');
-                mineCountTag.style.color = 'red'; // Change text color to red when flagged
+                mineCountTag.style.color = '#c12028'; // Change text color to red when flagged
               }
             } else {
               cell.style.backgroundColor = ''; // Reset background color when unflagged
+              cell.style.color = '';
+              cell.style.backgroundImage = '';  // Reset background iamge when unflagged
               if (cell.classList.contains('adjacent')) {
                 const mineCountTag = cell.querySelector('.mine-count');
                 mineCountTag.style.color = ''; // Reset text color when unflagged
@@ -239,6 +243,43 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
+
+  // Add a click event listener for the hint button
+  const hintButton = document.getElementById('hint-button');
+  hintButton.addEventListener('click', useHint);
+
+  function useHint() {
+    if (!gameEnded) {
+      const unrevealedCells = getUnrevealedNonMineCells();
+      if (unrevealedCells.length > 0) {
+        // Pick a random unrevealed non-mine cell
+        const randomIndex = Math.floor(Math.random() * unrevealedCells.length);
+        const randomCell = unrevealedCells[randomIndex];
+
+        // Reveal the selected cell
+        revealCell(randomCell);
+      } else {
+        // Handle the case when there are no unrevealed non-mine cells
+        window.alert('No unrevealed non-mine cells left.');
+      }
+    }
+  }
+
+  // Function to get all unrevealed non-mine cells
+  function getUnrevealedNonMineCells() {
+    const cells = gameGrid.getElementsByTagName('td');
+    const unrevealedNonMineCells = [];
+
+    for (let cell of cells) {
+      if (!cell.classList.contains('revealed') && !cell.classList.contains('mine')) {
+        unrevealedNonMineCells.push(cell);
+      }
+    }
+
+    return unrevealedNonMineCells;
+  }
+
+  
 });
 
 function placeMines(numberOfMines) {

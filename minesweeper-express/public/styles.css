@@ -5,9 +5,14 @@
   margin: 0 auto;
 }
 
+body
+{
+  background-color: grey;
+}
+
 #game-grid td {
   width: 3%; /* Adjust the width of each cell */
-  border: 1px solid #ccc;
+  border: 1px solid darkgrey;
   text-align: center;
   vertical-align: middle;
   cursor: pointer;
@@ -59,6 +64,7 @@ h1
   font-size: xx-large;
   font: bold;
   text-align: center;
+  border: white 10px;
 }
 
 h2
