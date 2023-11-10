@@ -2,12 +2,11 @@
   width: 75vh; /* Set the game board's width to 95% of the viewport height */
   height: 75vh; /* Set the game board's height to 95% of the viewport height */
   border-collapse: collapse;
-  margin: 0 auto;
+  margin: 0 auto; /* Center the game board horizontally */
 }
 
-body
-{
-  background-color: grey;
+body {
+  background-color: lightslategray;
 }
 
 #game-grid td {
@@ -51,12 +50,6 @@ image
 {
   width: 30px;
   height: 30px;
-}
-
-button
-{
-  margin: 0 auto; 
-  margin-bottom: 20px;
 }
 
 h1
@@ -107,4 +100,50 @@ h2
 
 .modal button:focus {
   outline: none;
+}
+
+.center-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: auto;
+}
+
+.button {
+  display: inline-block;
+  margin: 10px;
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #2980b9;
+}
+
+.button:focus {
+  outline: none;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  padding: 10px; 
+}
+
+.counter-container {
+  display: flex;
+  justify-content: flex-end; 
+  width: 75vh; 
+}
+
+/* Add this style for the hint counter */
+.counter {
+  font-size: 16px;
+  margin-bottom: 10px;
 }

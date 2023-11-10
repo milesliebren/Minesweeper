@@ -1,13 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-  <h1>Minesweeper</h1>
-  <h2>By: Miles Liebren</h2>
-  <button id="new-game">New Game</button><button id="hint-button" style="display:block">Hint</button>
-  <table id="game-grid"></table>
+  <div class="game-container">
+    <h1>Minesweeper</h1>
+    <div class="center-buttons">
+      <button id="new-game" class="button">
+        New Game
+      </button>
+      <button id="hint-button" class="button">
+        Hint
+      </button>
+    </div>
+    <div class="counter-container">
+      <div class="counter" id="hint-counter">
+        Hints: 3
+      </div>
+    </div>
+      <table id="game-grid"></table>
+      <h2>By: Miles Liebren</h2>
+  </div>
   <script src="script.js"></script>
 </body>
 </html>

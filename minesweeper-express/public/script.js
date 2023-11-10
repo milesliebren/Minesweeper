@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let gameEnded = false;
   const gridSize = 25;
   let numMines;
+  let numberOfHints = 3; // Add this variable for hint counter
   const gameGrid = document.getElementById('game-grid');
   const newGameBtn = document.getElementById('new-game');
 
@@ -279,7 +280,43 @@ document.addEventListener('DOMContentLoaded', function () {
     return unrevealedNonMineCells;
   }
 
-  
+  hintButton.addEventListener('click', useHint);
+
+  function useHint() {
+    if (!gameEnded && numberOfHints > 0) {
+      const unrevealedCells = getUnrevealedNonMineCells();
+      if (unrevealedCells.length > 0) {
+        // Pick a random unrevealed non-mine cell
+        const randomIndex = Math.floor(Math.random() * unrevealedCells.length);
+        const randomCell = unrevealedCells[randomIndex];
+
+        // Reveal the selected cell
+        revealCell(randomCell);
+
+        // Decrement the hint counter
+        numberOfHints--;
+
+        // Update the hint counter display
+        updateHintCounter();
+
+        // Check if the user has used all hints
+        if (numberOfHints === 0) {
+          hintButton.disabled = true; // Disable the hint button
+        }
+      } else {
+        // Handle the case when there are no unrevealed non-mine cells
+        window.alert('No unrevealed non-mine cells left.');
+      }
+    }
+  }
+
+  // Function to update the hint counter display
+  function updateHintCounter() {
+    const hintCounter = document.getElementById('hint-counter');
+    hintCounter.textContent = `Hints: ${numberOfHints}`;
+  }
+
+
 });
 
 function placeMines(numberOfMines) {
