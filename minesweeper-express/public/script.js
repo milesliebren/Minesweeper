@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   let gameEnded = false;
+  let timerInterval; // Variable to store the timer interval
+  let timeElapsed = 0; // Variable to store the elapsed time in seconds
   const gridSize = 25;
   let numMines;
   let numberOfHints = 3; // Add this variable for hint counter
@@ -70,6 +72,10 @@ document.addEventListener('DOMContentLoaded', function () {
   function startGame(level) {
     removeModal(); // Remove the level selection modal
     removeGrid(); // Remove the existing grid
+    timeElapsed = 0; // Reset the elapsed time when starting a new game
+    updateTimerDisplay(); // Update the timer display
+    startTimer(); // Start the timer
+    
     switch (level) {
       case 'easy':
         numMines = 50;
@@ -193,9 +199,29 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
-  
+
+  function startTimer() {
+    // Start the timer interval
+    timerInterval = setInterval(function () {
+      timeElapsed++;
+      updateTimerDisplay();
+    }, 1000); // Update every 1000 milliseconds (1 second)
+  }
+
+  function stopTimer() {
+    // Stop the timer interval
+    clearInterval(timerInterval);
+  }
+
+  function updateTimerDisplay() {
+    // Display the elapsed time in seconds
+    const timerDisplay = document.getElementById('timer');
+    timerDisplay.textContent = `Time: ${timeElapsed}s`;
+  }
+
   function endGame(win) {
     gameEnded = true;
+    stopTimer(); // Stop the timer
     if (!win) {
       revealMines();
       setTimeout(function () {

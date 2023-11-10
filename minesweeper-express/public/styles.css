@@ -62,9 +62,10 @@ h1
 
 h2
 {
-  font-size: medium;
+  font-size: large;
   font: italic, bolder;
   text-align: center;
+  margin-top: 30px;
 }
 
 .modal {
@@ -138,11 +139,11 @@ h2
 
 .counter-container {
   display: flex;
-  justify-content: flex-end; 
-  width: 75vh; 
+  justify-content: space-between; 
+  width: 75vh;
+  font-size: large; 
 }
 
-/* Add this style for the hint counter */
 .counter {
   font-size: 16px;
   margin-bottom: 10px;
