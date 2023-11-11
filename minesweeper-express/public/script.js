@@ -1,14 +1,17 @@
 document.addEventListener('DOMContentLoaded', function () {
   let gameEnded = false;
-  let timerInterval; // Variable to store the timer interval
-  let timeElapsed = 0; // Variable to store the elapsed time in seconds
+  let timerInterval; 
+  let timeElapsed = 0; 
   const gridSize = 25;
   let numMines;
-  let numberOfHints = 3; // Add this variable for hint counter
+  let numberOfHints = 3; 
+
+  const timerDisplay = document.getElementById('timer');
+  const hintButton = document.getElementById('hint-button');
   const gameGrid = document.getElementById('game-grid');
   const newGameBtn = document.getElementById('new-game');
   const devWinBtn = document.getElementById('devWin');
-  //const mongoose = require("mongoose");
+  const hintCounter = document.getElementById('hint-counter');
 
   // Display the level modal when the page loads
   displayLevelModal();
@@ -94,15 +97,16 @@ document.addEventListener('DOMContentLoaded', function () {
     placeMines(numMines);
   }
 
-  // Add a click event listener to the "New Game" button
+  //Event Listeners for buttons
+  
+  hintButton.addEventListener('click', useHint);
   newGameBtn.addEventListener('click', function (){
     newGameBtn.style.display = 'none'; // Hide the "New Game" button
     displayLevelModal(); // Display the level selection modal
   });
+  devWinBtn.addEventListener('click', endGame(true));
 
-  devWinBtn.addEventListener('click', function(){
-    endGame(true);
-  })
+
 
   function generateGrid()
   {
@@ -111,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
       for (let j = 0; j < gridSize; j++) {
         const cell = document.createElement('td');
         row.appendChild(cell);
+        //when a cell is clicked
         cell.addEventListener('contextmenu', function (e) {
           e.preventDefault(); // Prevent the default context menu
           if (!gameEnded) {
@@ -220,7 +225,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateTimerDisplay() {
     // Display the elapsed time in seconds
-    const timerDisplay = document.getElementById('timer');
     timerDisplay.textContent = `Time: ${timeElapsed}s`;
   }
 
@@ -276,27 +280,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Add a click event listener for the hint button
-  const hintButton = document.getElementById('hint-button');
-  hintButton.addEventListener('click', useHint);
-
-  function useHint() {
-    if (!gameEnded) {
-      const unrevealedCells = getUnrevealedNonMineCells();
-      if (unrevealedCells.length > 0) {
-        // Pick a random unrevealed non-mine cell
-        const randomIndex = Math.floor(Math.random() * unrevealedCells.length);
-        const randomCell = unrevealedCells[randomIndex];
-
-        // Reveal the selected cell
-        revealCell(randomCell);
-      } else {
-        // Handle the case when there are no unrevealed non-mine cells
-        window.alert('No unrevealed non-mine cells left.');
-      }
-    }
-  }
-
   // Function to get all unrevealed non-mine cells
   function getUnrevealedNonMineCells() {
     const cells = gameGrid.getElementsByTagName('td');
@@ -310,8 +293,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     return unrevealedNonMineCells;
   }
-
-  hintButton.addEventListener('click', useHint);
 
   function useHint() {
     if (!gameEnded && numberOfHints > 0) {
@@ -343,7 +324,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Function to update the hint counter display
   function updateHintCounter() {
-    const hintCounter = document.getElementById('hint-counter');
     hintCounter.textContent = `Hints: ${numberOfHints}`;
   }
 
@@ -351,7 +331,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function placeMines(numberOfMines) {
-  const gameGrid = document.getElementById('game-grid');
   const cells = gameGrid.getElementsByTagName('td');
   const totalCells = cells.length;
 
@@ -382,7 +361,6 @@ function placeMines(numberOfMines) {
 }
 
 function markAdjacentCells(cellIndex, cells) {
-  const gameGrid = document.getElementById('game-grid');
   const numRows = Math.sqrt(cells.length);
   const row = Math.floor(cellIndex / numRows);
   const col = cellIndex % numRows;
