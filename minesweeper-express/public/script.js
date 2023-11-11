@@ -7,7 +7,11 @@ document.addEventListener('DOMContentLoaded', function () {
   let numberOfHints = 3; // Add this variable for hint counter
   const gameGrid = document.getElementById('game-grid');
   const newGameBtn = document.getElementById('new-game');
-  const mongoose = require("mongoose");
+  const devWinBtn = document.getElementById('devWin');
+  //const mongoose = require("mongoose");
+
+  // Display the level modal when the page loads
+  displayLevelModal();
 
   // Function to remove the existing grid
   function removeGrid() {
@@ -15,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
       gameGrid.removeChild(gameGrid.firstChild);
     }
   }
-
   // Function to create a modal dialog with level buttons
   function createLevelModal() {
     const modal = document.createElement('div');
@@ -67,9 +70,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Display the level modal when the page loads
-  displayLevelModal();
-
   function startGame(level) {
     removeModal(); // Remove the level selection modal
     removeGrid(); // Remove the existing grid
@@ -95,10 +95,14 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Add a click event listener to the "New Game" button
-  newGameBtn.addEventListener('click', function () {
+  newGameBtn.addEventListener('click', function (){
     newGameBtn.style.display = 'none'; // Hide the "New Game" button
     displayLevelModal(); // Display the level selection modal
   });
+
+  devWinBtn.addEventListener('click', function(){
+    endGame(true);
+  })
 
   function generateGrid()
   {
