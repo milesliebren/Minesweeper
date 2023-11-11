@@ -1,21 +1,12 @@
 document.addEventListener('DOMContentLoaded', function () {
   let gameEnded = false;
-  let timerInterval; 
-  let timeElapsed = 0; 
+  let timerInterval; // Variable to store the timer interval
+  let timeElapsed = 0; // Variable to store the elapsed time in seconds
   const gridSize = 25;
   let numMines;
-  let numberOfHints = 3; 
-
-  const timerDisplay = document.getElementById('timer');
-  const hintButton = document.getElementById('hint-button');
+  let numberOfHints = 3; // Add this variable for hint counter
   const gameGrid = document.getElementById('game-grid');
   const newGameBtn = document.getElementById('new-game');
-  const devWinBtn = document.getElementById('devWin');
-  const hintCounter = document.getElementById('hint-counter');
-
-  // Display the level modal when the page loads
-  displayLevelModal();
-
   // Function to remove the existing grid
   function removeGrid() {
     while (gameGrid.firstChild) {
@@ -26,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function () {
   function createLevelModal() {
     const modal = document.createElement('div');
     modal.className = 'modal';
-
     const easyBtn = document.createElement('button');
     easyBtn.textContent = 'Easy';
     easyBtn.addEventListener('click', function () {
@@ -34,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
       modal.style.display = 'none';
       newGameBtn.style.display = 'block'; // Display the "New Game" button
     });
-
     const mediumBtn = document.createElement('button');
     mediumBtn.textContent = 'Medium';
     mediumBtn.addEventListener('click', function () {
@@ -42,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function () {
       modal.style.display = 'none';
       newGameBtn.style.display = 'block'; // Display the "New Game" button
     });
-
     const hardBtn = document.createElement('button');
     hardBtn.textContent = 'Hard';
     hardBtn.addEventListener('click', function () {
@@ -50,21 +38,17 @@ document.addEventListener('DOMContentLoaded', function () {
       modal.style.display = 'none';
       newGameBtn.style.display = 'block'; // Display the "New Game" button
     });
-
     modal.appendChild(easyBtn);
     modal.appendChild(mediumBtn);
     modal.appendChild(hardBtn);
-
     return modal;
   }
-
   // Function to display the level modal
   function displayLevelModal() {
     const modal = createLevelModal();
     document.body.appendChild(modal);
     newGameBtn.style.display = 'none'; // Hide the "New Game" button
   }
-
   // Function to remove the modal
   function removeModal() {
     const modal = document.querySelector('.modal');
@@ -72,14 +56,15 @@ document.addEventListener('DOMContentLoaded', function () {
       modal.remove();
     }
   }
-
+  // Display the level modal when the page loads
+  displayLevelModal();
   function startGame(level) {
     removeModal(); // Remove the level selection modal
     removeGrid(); // Remove the existing grid
     timeElapsed = 0; // Reset the elapsed time when starting a new game
     updateTimerDisplay(); // Update the timer display
     startTimer(); // Start the timer
-    
+
     switch (level) {
       case 'easy':
         numMines = 50;
@@ -96,18 +81,11 @@ document.addEventListener('DOMContentLoaded', function () {
     generateGrid();
     placeMines(numMines);
   }
-
-  //Event Listeners for buttons
-  
-  hintButton.addEventListener('click', useHint);
-  newGameBtn.addEventListener('click', function (){
+  // Add a click event listener to the "New Game" button
+  newGameBtn.addEventListener('click', function () {
     newGameBtn.style.display = 'none'; // Hide the "New Game" button
     displayLevelModal(); // Display the level selection modal
   });
-  devWinBtn.addEventListener('click', endGame(true));
-
-
-
   function generateGrid()
   {
     for (let i = 0; i < gridSize; i++) {
@@ -115,7 +93,6 @@ document.addEventListener('DOMContentLoaded', function () {
       for (let j = 0; j < gridSize; j++) {
         const cell = document.createElement('td');
         row.appendChild(cell);
-        //when a cell is clicked
         cell.addEventListener('contextmenu', function (e) {
           e.preventDefault(); // Prevent the default context menu
           if (!gameEnded) {
@@ -140,7 +117,6 @@ document.addEventListener('DOMContentLoaded', function () {
             checkWinCondition(); // Check the win condition after each flag operation
           }
         });
-
         cell.addEventListener('click', function (e) {
           e.preventDefault(); // Prevent default behavior (for cells with context menu)
           if (!gameEnded) {
@@ -156,7 +132,6 @@ document.addEventListener('DOMContentLoaded', function () {
       gameGrid.appendChild(row);
     }
   }
-
   function revealCell(cell) {
     if (!cell.classList.contains('revealed') && !cell.classList.contains('flagged')) {
       cell.classList.add('revealed');
@@ -210,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+
   function startTimer() {
     // Start the timer interval
     timerInterval = setInterval(function () {
@@ -225,6 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateTimerDisplay() {
     // Display the elapsed time in seconds
+    const timerDisplay = document.getElementById('timer');
     timerDisplay.textContent = `Time: ${timeElapsed}s`;
   }
 
@@ -266,7 +243,6 @@ document.addEventListener('DOMContentLoaded', function () {
       endGame(true);
     }
   } 
-
   function revealMines() {
     const cells = gameGrid.getElementsByTagName('td');
     const bombImageURL = 'https://png.pngtree.com/png-vector/20191113/ourmid/pngtree-retro-bomb-icon-cartoon-style-png-image_1965877.jpg';
@@ -279,21 +255,36 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
-
+  // Add a click event listener for the hint button
+  const hintButton = document.getElementById('hint-button');
+  hintButton.addEventListener('click', useHint);
+  function useHint() {
+    if (!gameEnded) {
+      const unrevealedCells = getUnrevealedNonMineCells();
+      if (unrevealedCells.length > 0) {
+        // Pick a random unrevealed non-mine cell
+        const randomIndex = Math.floor(Math.random() * unrevealedCells.length);
+        const randomCell = unrevealedCells[randomIndex];
+        // Reveal the selected cell
+        revealCell(randomCell);
+      } else {
+        // Handle the case when there are no unrevealed non-mine cells
+        window.alert('No unrevealed non-mine cells left.');
+      }
+    }
+  }
   // Function to get all unrevealed non-mine cells
   function getUnrevealedNonMineCells() {
     const cells = gameGrid.getElementsByTagName('td');
     const unrevealedNonMineCells = [];
-
     for (let cell of cells) {
       if (!cell.classList.contains('revealed') && !cell.classList.contains('mine')) {
         unrevealedNonMineCells.push(cell);
       }
     }
-
     return unrevealedNonMineCells;
   }
-
+  hintButton.addEventListener('click', useHint);
   function useHint() {
     if (!gameEnded && numberOfHints > 0) {
       const unrevealedCells = getUnrevealedNonMineCells();
@@ -301,16 +292,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Pick a random unrevealed non-mine cell
         const randomIndex = Math.floor(Math.random() * unrevealedCells.length);
         const randomCell = unrevealedCells[randomIndex];
-
         // Reveal the selected cell
         revealCell(randomCell);
-
         // Decrement the hint counter
         numberOfHints--;
-
         // Update the hint counter display
         updateHintCounter();
-
         // Check if the user has used all hints
         if (numberOfHints === 0) {
           hintButton.disabled = true; // Disable the hint button
@@ -321,52 +308,43 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
-
   // Function to update the hint counter display
   function updateHintCounter() {
+    const hintCounter = document.getElementById('hint-counter');
     hintCounter.textContent = `Hints: ${numberOfHints}`;
   }
-
-
 });
-
 function placeMines(numberOfMines) {
+  const gameGrid = document.getElementById('game-grid');
   const cells = gameGrid.getElementsByTagName('td');
   const totalCells = cells.length;
-
   if (numberOfMines > totalCells) {
     console.error('The number of mines exceeds the grid size.');
     return;
   }
-
   // Create an array of indices representing cell positions
   const cellIndices = [...Array(totalCells).keys()];
-
   // Shuffle the cell indices randomly
   for (let i = totalCells - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [cellIndices[i], cellIndices[j]] = [cellIndices[j], cellIndices[i]];
   }
-
   // Place mines by changing the class of the cell to 'mine'
   const mineIndices = cellIndices.slice(0, numberOfMines);
   mineIndices.forEach((cellIndex) => {
     cells[cellIndex].classList.add('mine');
   });
-
   // Mark adjacent cells
   for (let i = 0; i < totalCells; i++) {
     markAdjacentCells(i, cells);
   }
 }
-
 function markAdjacentCells(cellIndex, cells) {
+  const gameGrid = document.getElementById('game-grid');
   const numRows = Math.sqrt(cells.length);
   const row = Math.floor(cellIndex / numRows);
   const col = cellIndex % numRows;
-
   let mineCount = 0; // Initialize the mine count to 0
-
   for (let i = -1; i <= 1; i++) {
     for (let j = -1; j <= 1; j++) {
       const adjacentRow = row + i;
@@ -379,7 +357,6 @@ function markAdjacentCells(cellIndex, cells) {
       }
     }
   }
-
   if (mineCount > 0 && !cells[cellIndex].classList.contains('mine')) {
     // Add the "adjacent" class to the cell
     cells[cellIndex].classList.add('adjacent');
