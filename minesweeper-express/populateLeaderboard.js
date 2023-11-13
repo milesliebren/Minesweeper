@@ -24,15 +24,15 @@
   async function createLeaderboardEntries() {
     console.log("Adding entries");
     await Promise.all([
-      entryCreate(0, "testUser1", Date.parse('11/10/2023'), 100),
-      entryCreate(1, "testUser2", Date.parse('11/10/2023'), 200),
-      entryCreate(2, "testUser3", Date.parse('11/10/2023'), 300),
+      entryCreate(0, "testUser1", Date.parse('11/10/2023'), 100, 'easy'),
+      entryCreate(1, "testUser2", Date.parse('11/10/2023'), 200, 'medium'),
+      entryCreate(2, "testUser3", Date.parse('11/10/2023'), 300, 'hard'),
     ]);
   }
 
-  async function entryCreate(index, username, currentDate, elapsedTime)
+  async function entryCreate(index, username, currentDate, elapsedTime, difficulty)
   {
-    const entry = { username: username, currentDate: currentDate, elapsedTime: elapsedTime};
+    const entry = { username: username, currentDate: currentDate, elapsedTime: elapsedTime, difficulty: difficulty};
     const newEntry = new Leaderboard_Entry(entry);
     await newEntry.save();
     leaderboard_entries[index] = newEntry;

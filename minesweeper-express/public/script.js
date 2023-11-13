@@ -1,9 +1,9 @@
+let numMines;
 document.addEventListener('DOMContentLoaded', function () {
   let gameEnded = false;
   let timerInterval; // Variable to store the timer interval
   let timeElapsed = 0; // Variable to store the elapsed time in seconds
   const gridSize = 25;
-  let numMines;
   let numberOfHints = 3; // Add this variable for hint counter
   const gameGrid = document.getElementById('game-grid');
   const newGameBtn = document.getElementById('new-game');
@@ -254,6 +254,7 @@ document.addEventListener('DOMContentLoaded', function () {
         username: username,
         currentDate: new Date(),
         elapsedTime: timeElapsed,
+        difficulty: getDifficulty(),
       }),
     });
   
@@ -262,6 +263,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   
     window.alert('Score added to leaderboard successfully!');
+  }
+
+  function getDifficulty()
+  {
+    switch (numMines) {
+      case 50:
+        return 'easy';
+      case 75:
+        return 'medium';
+      case 100:
+        return 'hard';
+      default:
+        return 'unknown';
+    }
   }
   
   function checkWinCondition() {

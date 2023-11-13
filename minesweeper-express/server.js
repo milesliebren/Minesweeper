@@ -19,7 +19,8 @@ async function main() {
 const leaderboardEntrySchema = new mongoose.Schema({
   username: String,
   currentDate: Date,
-  elapsedTime: Number
+  elapsedTime: Number,
+  difficulty: String
 });
 
 // Create a mongoose model
@@ -27,15 +28,15 @@ const Leaderboard_Entry = mongoose.model('Leaderboard_Entry', leaderboardEntrySc
 
 app.post('/api/leaderboard', async (req, res) => {
   try {
-    const { username, currentDate, elapsedTime } = req.body;
+    const { username, currentDate, elapsedTime, difficulty } = req.body;
 
     // Check if required parameters are present
-    if (!username || !currentDate || !elapsedTime) {
+    if (!username || !currentDate || !elapsedTime || !difficulty) {
       return res.status(400).send('Bad Request: Missing required parameters');
     }
 
     // Create a new entry with parameters from the request body
-    await entryCreate(username, new Date(currentDate), elapsedTime);
+    await entryCreate(username, new Date(currentDate), elapsedTime, difficulty);
 
     res.status(200).send('Entry added successfully!');
   } catch (error) {
@@ -52,8 +53,8 @@ app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
 
-async function entryCreate(username, currentDate, elapsedTime) {
-  const entry = { username, currentDate, elapsedTime };
+async function entryCreate(username, currentDate, elapsedTime, difficulty) {
+  const entry = { username, currentDate, elapsedTime, difficulty};
   const newEntry = new Leaderboard_Entry(entry);
   await newEntry.save();
 }
