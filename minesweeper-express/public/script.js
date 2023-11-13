@@ -8,6 +8,36 @@ document.addEventListener('DOMContentLoaded', function () {
   const gameGrid = document.getElementById('game-grid');
   const newGameBtn = document.getElementById('new-game');
   const hintButton = document.getElementById('hint-button');
+  
+  const addSampleEntryButton = document.getElementById('add-sample-entry');
+
+  addSampleEntryButton.addEventListener('click', async function () {
+    try {
+      await addSampleEntry();
+      console.log('Sample entry added successfully!');
+    } catch (error) {
+      console.error('Error adding sample entry:', error);
+    }
+  });
+
+  async function addSampleEntry() {
+    const response = await fetch('/api/leaderboard', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: 'sampleUser',
+        currentDate: new Date(),
+        elapsedTime: 150,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+  }
+  
   // Function to remove the existing grid
   function removeGrid() {
     while (gameGrid.firstChild) {
@@ -221,6 +251,11 @@ document.addEventListener('DOMContentLoaded', function () {
         location.reload();
       }, 500); // Adjust the delay as needed (500 milliseconds in this example)
     }
+  }
+
+  function addLeaderboardEntry()
+  {
+
   }
   
   function checkWinCondition() {
