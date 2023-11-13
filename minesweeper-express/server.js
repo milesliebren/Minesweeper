@@ -1,14 +1,19 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 const app = express();
 const port = process.env.PORT || 3000;
-
-// Serve static files from the "public" directory
+const mongoDB = "mongodb+srv://test:test@leaderboard.o7mtq0w.mongodb.net/";
+mongoose.set("strictQuery", false);
 app.use(express.static('public'));
 
-// Set up mongoose connection
-mongoose.connect("mongodb+srv://test:test@leaderboard.o7mtq0w.mongodb.net/", {useNewUrlParser: true, useUnifiedTopology: true});
-mongoose.set("strictQuery", false);
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+main().catch((err) => console.log(err));
+async function main() {
+  await mongoose.connect(mongoDB);
+}
 
 // Define the leaderboard entry schema
 const leaderboardEntrySchema = new mongoose.Schema({
@@ -22,11 +27,19 @@ const Leaderboard_Entry = mongoose.model('Leaderboard_Entry', leaderboardEntrySc
 
 app.post('/api/leaderboard', async (req, res) => {
   try {
-    // Add a single sample entry
-    await entryCreate("sampleUser", new Date(), 150);
-    res.status(200).send('Sample entry added successfully!');
+    const { username, currentDate, elapsedTime } = req.body;
+
+    // Check if required parameters are present
+    if (!username || !currentDate || !elapsedTime) {
+      return res.status(400).send('Bad Request: Missing required parameters');
+    }
+
+    // Create a new entry with parameters from the request body
+    await entryCreate(username, new Date(currentDate), elapsedTime);
+
+    res.status(200).send('Entry added successfully!');
   } catch (error) {
-    console.error('Error adding sample entry:', error);
+    console.error('Error adding entry:', error);
     res.status(500).send('Internal Server Error');
   }
 });

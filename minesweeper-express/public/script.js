@@ -27,9 +27,9 @@ document.addEventListener('DOMContentLoaded', function () {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        username: 'sampleUser',
+        username: 'sampleUserFromScript',
         currentDate: new Date(),
-        elapsedTime: 150,
+        elapsedTime: 250,
       }),
     });
 
