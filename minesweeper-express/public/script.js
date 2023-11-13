@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let numberOfHints = 3; // Add this variable for hint counter
   const gameGrid = document.getElementById('game-grid');
   const newGameBtn = document.getElementById('new-game');
+  const hintButton = document.getElementById('hint-button');
   // Function to remove the existing grid
   function removeGrid() {
     while (gameGrid.firstChild) {
@@ -86,6 +87,7 @@ document.addEventListener('DOMContentLoaded', function () {
     newGameBtn.style.display = 'none'; // Hide the "New Game" button
     displayLevelModal(); // Display the level selection modal
   });
+  hintButton.addEventListener('click', useHint);
   function generateGrid()
   {
     for (let i = 0; i < gridSize; i++) {
@@ -144,7 +146,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
-  
   function revealAdjacentEmptyCells(cell) {
     const queue = [];
     queue.push(cell);
@@ -184,8 +185,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
-
-
   function startTimer() {
     // Start the timer interval
     timerInterval = setInterval(function () {
@@ -255,9 +254,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
-  // Add a click event listener for the hint button
-  const hintButton = document.getElementById('hint-button');
-  hintButton.addEventListener('click', useHint);
   function useHint() {
     if (!gameEnded) {
       const unrevealedCells = getUnrevealedNonMineCells();
@@ -284,7 +280,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     return unrevealedNonMineCells;
   }
-  hintButton.addEventListener('click', useHint);
   function useHint() {
     if (!gameEnded && numberOfHints > 0) {
       const unrevealedCells = getUnrevealedNonMineCells();
