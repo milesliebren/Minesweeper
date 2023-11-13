@@ -1,4 +1,5 @@
 let numMines;
+document.addEventListener('DOMContentLoaded', fetchLeaderboard);
 document.addEventListener('DOMContentLoaded', function () {
   let gameEnded = false;
   let timerInterval; // Variable to store the timer interval
@@ -417,4 +418,26 @@ function markAdjacentCells(cellIndex, cells) {
     mineCountTag.textContent = mineCount;
     cells[cellIndex].appendChild(mineCountTag);
   }
+}
+
+async function fetchLeaderboard() {
+  const response = await fetch('/api/leaderboard');
+  const data = await response.json();
+
+  // Assuming data is an array of leaderboard entries
+  const tableBody = document.getElementById('leaderboard-body');
+  tableBody.innerHTML = '';
+
+  data.forEach((entry, index) => {
+    const row = tableBody.insertRow();
+    const rankCell = row.insertCell(0);
+    const usernameCell = row.insertCell(1);
+    const timeCell = row.insertCell(2);
+    const difficultyCell = row.insertCell(3);
+
+    rankCell.textContent = index + 1;
+    usernameCell.textContent = entry.username;
+    timeCell.textContent = entry.elapsedTime;
+    difficultyCell.textContent = entry.difficulty;
+  });
 }
