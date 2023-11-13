@@ -1,5 +1,5 @@
 let numMines;
-document.addEventListener('DOMContentLoaded', fetchLeaderboard);
+document.addEventListener('DOMContentLoaded', fetchLeaderboards);
 document.addEventListener('DOMContentLoaded', function () {
   let gameEnded = false;
   let timerInterval; // Variable to store the timer interval
@@ -420,24 +420,33 @@ function markAdjacentCells(cellIndex, cells) {
   }
 }
 
-async function fetchLeaderboard() {
-  const response = await fetch('/api/leaderboard');
-  const data = await response.json();
+async function fetchLeaderboards() {
+  await fetchLeaderboard('easy', 'easy-leaderboard-body');
+  await fetchLeaderboard('medium', 'medium-leaderboard-body');
+  await fetchLeaderboard('hard', 'hard-leaderboard-body');
+}
 
-  // Assuming data is an array of leaderboard entries
-  const tableBody = document.getElementById('leaderboard-body');
-  tableBody.innerHTML = '';
+async function fetchLeaderboard(difficulty, tableBodyId) {
+  try {
+    const response = await fetch(`/api/leaderboard?difficulty=${difficulty}`);
+    const data = await response.json();
 
-  data.forEach((entry, index) => {
-    const row = tableBody.insertRow();
-    const rankCell = row.insertCell(0);
-    const usernameCell = row.insertCell(1);
-    const timeCell = row.insertCell(2);
-    const difficultyCell = row.insertCell(3);
+    const tableBody = document.getElementById(tableBodyId);
+    tableBody.innerHTML = '';
 
-    rankCell.textContent = index + 1;
-    usernameCell.textContent = entry.username;
-    timeCell.textContent = entry.elapsedTime;
-    difficultyCell.textContent = entry.difficulty;
-  });
+    data.forEach((entry, index) => {
+      const row = tableBody.insertRow();
+      const rankCell = row.insertCell(0);
+      const usernameCell = row.insertCell(1);
+      const dateCell = row.insertCell(2);
+      const timeCell = row.insertCell(3);
+
+      rankCell.textContent = index + 1;
+      usernameCell.textContent = entry.username;
+      dateCell.textContent = new Date(entry.currentDate).toLocaleDateString();
+      timeCell.textContent = entry.elapsedTime;
+    });
+  } catch (error) {
+    console.error(`Error fetching ${difficulty} leaderboard:`, error);
+  }
 }

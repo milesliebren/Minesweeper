@@ -27,33 +27,34 @@ const leaderboardEntrySchema = new mongoose.Schema({
 const Leaderboard_Entry = mongoose.model('Leaderboard_Entry', leaderboardEntrySchema);
 
 app.route('/api/leaderboard')
-  .get(async (req, res) => {
-    try {
-      const leaderboard = await Leaderboard_Entry.find().sort({ elapsedTime: 1 }).limit(5); // Adjust the query as needed
-      res.json(leaderboard);
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
-      res.status(500).send('Internal Server Error');
+.get(async (req, res) => {
+  try {
+    const difficulty = req.query.difficulty || '';
+    const leaderboard = await Leaderboard_Entry.find({ difficulty }).sort({ elapsedTime: 1 }).limit(5);
+    res.json(leaderboard);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send('Internal Server Error');
+  }
+})
+.post(async (req, res) => {
+  try {
+    const { username, currentDate, elapsedTime, difficulty } = req.body;
+
+    // Check if required parameters are present
+    if (!username || !currentDate || !elapsedTime || !difficulty) {
+      return res.status(400).send('Bad Request: Missing required parameters');
     }
-  })
-  .post(async (req, res) => {
-    try {
-      const { username, currentDate, elapsedTime, difficulty } = req.body;
-  
-      // Check if required parameters are present
-      if (!username || !currentDate || !elapsedTime || !difficulty) {
-        return res.status(400).send('Bad Request: Missing required parameters');
-      }
-  
-      // Create a new entry with parameters from the request body
-      await entryCreate(username, new Date(currentDate), elapsedTime, difficulty);
-  
-      res.status(200).send('Entry added successfully!');
-    } catch (error) {
-      console.error('Error adding entry:', error);
-      res.status(500).send('Internal Server Error');
-    }
-  });
+
+    // Create a new entry with parameters from the request body
+    await entryCreate(username, new Date(currentDate), elapsedTime, difficulty);
+
+    res.status(200).send('Entry added successfully!');
+  } catch (error) {
+    console.error('Error adding entry:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
