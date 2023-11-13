@@ -9,35 +9,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const newGameBtn = document.getElementById('new-game');
   const hintButton = document.getElementById('hint-button');
   
-  const addSampleEntryButton = document.getElementById('add-sample-entry');
-
-  addSampleEntryButton.addEventListener('click', async function () {
-    try {
-      await addSampleEntry();
-      console.log('Sample entry added successfully!');
-    } catch (error) {
-      console.error('Error adding sample entry:', error);
-    }
-  });
-
-  async function addSampleEntry() {
-    const response = await fetch('/api/leaderboard', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: 'sampleUserFromScript',
-        currentDate: new Date(),
-        elapsedTime: 250,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-  }
-  
   // Function to remove the existing grid
   function removeGrid() {
     while (gameGrid.firstChild) {
@@ -234,6 +205,16 @@ document.addEventListener('DOMContentLoaded', function () {
     timerDisplay.textContent = `Time: ${timeElapsed}s`;
   }
 
+  const btnTestEndgame = document.getElementById("testEndGame");
+  btnTestEndgame.addEventListener("click", function(){
+    testEndGame();
+  })
+
+  function testEndGame() {
+    const win = confirm('Simulate a win?'); // Ask the user if they want to simulate a win
+    endGame(win);
+  }
+
   function endGame(win) {
     gameEnded = true;
     stopTimer(); // Stop the timer
@@ -246,16 +227,41 @@ document.addEventListener('DOMContentLoaded', function () {
       }, 500); // Adjust the delay as needed (500 milliseconds in this example)
     } else {
       setTimeout(function () {
-        window.alert('Congratulations! You won! Play again?');
+        const addEntry = window.confirm('Congratulations! You won! Add Score to Leaderboard?');
+        
+        if (addEntry) {
+          const username = window.prompt('Enter your username:');
+          if (username) {
+            addLeaderboardEntry(username);
+          } else {
+            window.alert('Invalid username. Score not added to leaderboard.');
+          }
+        }
+  
         // Restart the game
         location.reload();
       }, 500); // Adjust the delay as needed (500 milliseconds in this example)
     }
   }
-
-  function addLeaderboardEntry()
-  {
-
+  
+  async function addLeaderboardEntry(username) {
+    const response = await fetch('/api/leaderboard', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username,
+        currentDate: new Date(),
+        elapsedTime: timeElapsed,
+      }),
+    });
+  
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+  
+    window.alert('Score added to leaderboard successfully!');
   }
   
   function checkWinCondition() {
