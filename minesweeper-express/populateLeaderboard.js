@@ -23,11 +23,32 @@
 
   async function createLeaderboardEntries() {
     console.log("Adding entries");
-    await Promise.all([
-      entryCreate(0, "testUser1", Date.parse('11/10/2023'), 100, 'easy'),
-      entryCreate(1, "testUser2", Date.parse('11/10/2023'), 200, 'medium'),
-      entryCreate(2, "testUser3", Date.parse('11/10/2023'), 300, 'hard'),
-    ]);
+    const easyEntries = Array.from({ length: 20 }, (_, index) =>
+      entryCreate(index, getRandomUsername(), getRandomDate('11/01/2023'), getRandomTime(), 'easy')
+    );
+    const mediumEntries = Array.from({ length: 20 }, (_, index) =>
+      entryCreate(index + 20, getRandomUsername(), getRandomDate('11/01/2023'), getRandomTime(), 'medium')
+    );
+    const hardEntries = Array.from({ length: 20 }, (_, index) =>
+      entryCreate(index + 40, getRandomUsername(), getRandomDate('11/01/2023'), getRandomTime(), 'hard')
+    );
+    await Promise.all([...easyEntries, ...mediumEntries, ...hardEntries]);
+  }
+  
+  function getRandomUsername() {
+    const adjectives = ['Happy', 'Funny', 'Silly', 'Clever', 'Brave', 'Kind', 'Gentle', 'Swift', 'Witty'];
+    const nouns = ['Fox', 'Cat', 'Dog', 'Rabbit', 'Tiger', 'Lion', 'Elephant', 'Dolphin', 'Owl'];
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    const randomNumber = Math.floor(Math.random() * 100);
+    return `${adjective}${noun}${randomNumber}`;
+  }
+  
+  function getRandomDate(startDate) {
+    const startMillis = Date.parse(startDate);
+    const endMillis = startMillis + 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+    const randomMillis = startMillis + Math.floor(Math.random() * (endMillis - startMillis));
+    return new Date(randomMillis);
   }
 
   async function entryCreate(index, username, currentDate, elapsedTime, difficulty)
@@ -36,4 +57,8 @@
     const newEntry = new Leaderboard_Entry(entry);
     await newEntry.save();
     leaderboard_entries[index] = newEntry;
+  }
+
+  function getRandomTime() {
+    return Math.floor(Math.random() * (500 - 50 + 1)) + 50; // Random time between 50 and 500 seconds
   }

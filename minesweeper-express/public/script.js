@@ -228,14 +228,21 @@ document.addEventListener('DOMContentLoaded', function () {
       }, 500); // Adjust the delay as needed (500 milliseconds in this example)
     } else {
       setTimeout(function () {
-        const addEntry = window.confirm('Congratulations! You won! Add Score to Leaderboard?');
-        
-        if (addEntry) {
-          const username = window.prompt('Enter your username:');
-          if (username) {
-            addLeaderboardEntry(username);
+        let validUsername = false;
+  
+        while (!validUsername) {
+          const addEntry = window.confirm('Congratulations! You won! Add Score to Leaderboard?');
+  
+          if (addEntry) {
+            const username = window.prompt('Enter your username:');
+            if (username && isValidUsername(username)) {
+              addLeaderboardEntry(username);
+              validUsername = true;
+            } else {
+              window.alert('Invalid username. Please enter a valid username.');
+            }
           } else {
-            window.alert('Invalid username. Score not added to leaderboard.');
+            validUsername = true; // Break out of the loop if the user chooses not to add to the leaderboard
           }
         }
   
@@ -390,6 +397,15 @@ function placeMines(numberOfMines) {
   for (let i = 0; i < totalCells; i++) {
     markAdjacentCells(i, cells);
   }
+}
+
+function isValidUsername(username) {
+  if (username.length > 14) {
+    return false;
+  }
+
+  const validUsernameRegex = /^[a-zA-Z0-9_]+$/;
+  return validUsernameRegex.test(username);
 }
 function markAdjacentCells(cellIndex, cells) {
   const gameGrid = document.getElementById('game-grid');

@@ -148,3 +148,39 @@ h2
   font-size: 16px;
   margin-bottom: 10px;
 }
+
+.leaderboard {
+  margin: auto;
+  padding: auto;
+  background-color: lightslategray;
+}
+
+.leaderboard table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: auto;
+  margin-bottom: 20px;
+  background-color: #f2f2f2;
+}
+
+.leaderboard th, .leaderboard td {
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  padding: 10px;
+  background-color: #f2f2f2;
+}
+
+.leaderboard th {
+  background-color: #f2f2f2;
+}
+
+.leaderboard h2 {
+  background-color: #f2f2f2;
+  color: black;
+  font:bolder italic;
+  margin: auto;
+  margin-top: 10px;
+  padding-bottom: 5px;
+  padding-top: 5px;
+  border-bottom: darkgrey 1px dashed;
+}

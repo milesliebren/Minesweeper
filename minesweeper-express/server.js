@@ -12,7 +12,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 main().catch((err) => console.log(err));
 async function main() {
-  await mongoose.connect(mongoDB);
+  try {
+    await mongoose.connect(mongoDB);
+    console.log('Connected to MongoDB');
+  } catch (error) {
+    throw new Error('MongoDB connection error: ' + error.message);
+  }
 }
 
 // Define the leaderboard entry schema
@@ -46,10 +51,13 @@ app.route('/api/leaderboard')
       return res.status(400).send('Bad Request: Missing required parameters');
     }
 
-    // Create a new entry with parameters from the request body
-    await entryCreate(username, new Date(currentDate), elapsedTime, difficulty);
+    if (isValidUsername(username)) {
+      await entryCreate(username, new Date(currentDate), elapsedTime, difficulty);
+      res.status(200).send('Entry added successfully!');
+    } else {
+      res.status(400).send('Bad Request: Invalid username');
+    }
 
-    res.status(200).send('Entry added successfully!');
   } catch (error) {
     console.error('Error adding entry:', error);
     res.status(500).send('Internal Server Error');
@@ -60,9 +68,19 @@ app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
 
+function isValidUsername(username) {
+  // Check if the username is less than 14 characters
+  if (username.length > 14) {
+    return false;
+  }
+
+  // Check if the username contains only alphanumeric characters and underscores
+  const validUsernameRegex = /^[a-zA-Z0-9_]+$/;
+  return validUsernameRegex.test(username);
+}
+
 async function entryCreate( username, currentDate, elapsedTime, difficulty) {
   const entry = { username, currentDate, elapsedTime, difficulty};
   const newEntry = new Leaderboard_Entry(entry);
   await newEntry.save();
-  leaderboard_entries[index] = newEntry;
 }
