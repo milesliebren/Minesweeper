@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', function () {
         numMines = 25;
     }
     generateGrid();
+    gameEnded = false;
     initializeGridEventListeners();
     placeMines(numMines);
   }
@@ -162,9 +163,8 @@ document.addEventListener('DOMContentLoaded', function () {
   newGameBtn.addEventListener('click', function () {
     if (isLoggedIn) {
       newGameBtn.style.display = 'none';
+      gameEnded = false;
       displayLevelModal();
-      removeGrid();
-      generateGrid();
     } else {
       promptLogin();
     }
@@ -348,8 +348,11 @@ document.addEventListener('DOMContentLoaded', function () {
           location.reload();
         else 
         {
-          removeModal();
           displayLevelModal();
+          removeGrid();
+          generateGrid();
+          gameEnded = false;
+          initializeGridEventListeners();
         }
       }, 500);
     } else {
