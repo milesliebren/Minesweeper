@@ -149,6 +149,8 @@ document.addEventListener('DOMContentLoaded', function () {
             password: password,
           }),
         });
+
+        console.log('Response:', response); // Add this line for debugging
   
         if (response.ok) {
           // Successful login
@@ -158,6 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
           displayLevelModal();
         } else {
           // Failed login
+          console.error('Login failed. Response:', response); // Add this line for debugging
           window.alert('Invalid username or password. Please try again.');
           // Optionally, clear the password field
           passwordInput.value = '';
@@ -167,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
         window.alert('An error occurred during login. Please try again.');
       }
     });
-  }
+}
 
   async function performLogin() {
     const username = usernameInput.value;
@@ -187,9 +190,6 @@ document.addEventListener('DOMContentLoaded', function () {
       removeModal();
       displayLevelModal();
     } else {
-      // Reprompt the user for credentials if desired
-      // This can be implemented based on your specific requirements
-      // Currently, it does nothing and closes the modal
       loginModal.style.display = 'none';
     }
   }

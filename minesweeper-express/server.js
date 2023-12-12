@@ -10,6 +10,10 @@ app.use(express.static('public'));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Internal Server Error');
+});
 
 main().catch((err) => console.log(err));
 async function main() {
@@ -58,36 +62,35 @@ app.route('/api/user-profile')
     res.status(500).send('Internal Server Error');
   }
 })
-  .post(async (req, res) => {
-    try {
-      const { username, password, sessionID } = req.body;
+.post(async (req, res) => {
+  try {
+    const { username, password, sessionID } = req.body;
 
-      // Check if required parameters are present
-      if (!username || !password || !sessionID) {
-        return res.status(400).send('Bad Request: Missing required parameters');
-      }
-
-      const user = await User_Profile.findOne({ username });
-
-      // Check if the user exists
-      if (user) {
-        return res.status(401).send('Login failed: User already exists');
-      }
-
-      // For development purposes, bypass password hashing
-      // You might want to remove this part in production
-      const hashedPassword = process.env.NODE_ENV !== 'production' ? password : await bcrypt.hash(password, 10);
-
-      // Create a new user profile
-      await profileCreate(username, hashedPassword, new Date(), 0, [], sessionID);
-
-      console.log(`User '${username}' registered successfully`);
-      res.status(200).json({ message: 'Registration successful' });
-    } catch (error) {
-      console.error('Error during registration:', error);
-      res.status(500).send('Internal Server Error');
+    // Check if required parameters are present
+    if (!username || !password || !sessionID) {
+      return res.status(400).send('Bad Request: Missing required parameters');
     }
-  })
+
+    const user = await User_Profile.findOne({ username });
+
+    // Check if the user exists
+    if (user) {
+      return res.status(401).send('Login failed: User already exists');
+    }
+
+    // Use bcrypt to hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user profile
+    await profileCreate(username, hashedPassword, new Date(), 0, [], sessionID);
+
+    console.log(`User '${username}' registered successfully`);
+    res.status(200).json({ message: 'Registration successful' });
+  } catch (error) {
+    console.error('Error during registration:', error);
+    res.status(500).send('Internal Server Error');
+  }
+})
 .put(async (req, res) => {
   try {
     const { username, numWins, bestTimes } = req.body;
@@ -138,6 +141,43 @@ app.route('/api/leaderboard')
 
   } catch (error) {
     console.error('Error adding entry:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.route('/api/login')
+.post(async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    // Check if required parameters are present
+    if (!username || !password) {
+      return res.status(400).send('Bad Request: Missing required parameters');
+    }
+
+    const user = await User_Profile.findOne({ username });
+
+    // Check if the user exists
+    if (!user) {
+      return res.status(401).send('Login failed: User not found');
+    }
+
+    console.log('Entered Password:', password);
+    console.log('Stored Hashed Password:', user.password);
+
+    // Compare the entered password with the stored hashed password using bcrypt
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    console.log('Password Match:', passwordMatch);
+
+    if (passwordMatch) {
+      // Passwords match, login successful
+      res.status(200).json({ message: 'Login successful' });
+    } else {
+      // Passwords do not match, login failed
+      res.status(401).send('Login failed: Invalid username or password');
+    }
+  } catch (error) {
+    console.error('Error during login:', error);
     res.status(500).send('Internal Server Error');
   }
 });
