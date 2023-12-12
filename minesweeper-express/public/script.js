@@ -31,6 +31,53 @@ document.addEventListener('DOMContentLoaded', function () {
       gameGrid.removeChild(gameGrid.firstChild);
     }
   }
+
+  function initializeGridEventListeners() {
+    const cells = gameGrid.getElementsByTagName('td');
+
+    for (let cell of cells) {
+      cell.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        console.log('Right-clicked on cell');
+        if (!gameEnded) {
+          cell.classList.toggle('flagged');
+          if (cell.classList.contains('flagged')) {
+            const flagImageURL = 'https://static.vecteezy.com/system/resources/previews/010/966/261/original/red-flag-cartoon-free-vector.jpg';
+            cell.style.backgroundImage = `url(${flagImageURL})`;
+            cell.style.backgroundSize = 'cover';
+            if (cell.classList.contains('adjacent')) {
+              const mineCountTag = cell.querySelector('.mine-count');
+              mineCountTag.style.color = '#c12028';
+            }
+          } else {
+            cell.style.backgroundColor = '';
+            cell.style.color = '';
+            cell.style.backgroundImage = '';
+            if (cell.classList.contains('adjacent')) {
+              const mineCountTag = cell.querySelector('.mine-count');
+              mineCountTag.style.color = '';
+            }
+          }
+          checkWinCondition();
+        }
+      });
+
+      cell.addEventListener('click', function (e) {
+        e.preventDefault();
+        console.log('Clicked on cell');
+        if (!gameEnded) {
+          if (cell.classList.contains('mine')) {
+            endGame(false);
+            revealMines();
+          } else if (!cell.classList.contains('revealed')) {
+            revealCell(cell);
+          }
+        }
+      });
+    }
+  }
+
+
   // Function to create a modal dialog with level buttons
   function createLevelModal() {
     const modal = document.createElement('div');
@@ -96,6 +143,7 @@ document.addEventListener('DOMContentLoaded', function () {
         numMines = 25;
     }
     generateGrid();
+    initializeGridEventListeners();
     placeMines(numMines);
   }
 
@@ -112,8 +160,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Add a click event listener to the "New Game" button
   newGameBtn.addEventListener('click', function () {
-    newGameBtn.style.display = 'none';
-    displayLevelModal();
+    if (isLoggedIn) {
+      newGameBtn.style.display = 'none';
+      displayLevelModal();
+      removeGrid();
+      generateGrid();
+    } else {
+      promptLogin();
+    }
   });
 
   hintButton.addEventListener('click', useHint);
@@ -194,64 +248,31 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  function generateGrid()
-  {
+  function generateGrid() {
     for (let i = 0; i < gridSize; i++) {
       const row = document.createElement('tr');
       for (let j = 0; j < gridSize; j++) {
         const cell = document.createElement('td');
         row.appendChild(cell);
-        cell.addEventListener('contextmenu', function (e) {
-          e.preventDefault(); // Prevent the default context menu
-          if (!gameEnded) {
-            cell.classList.toggle('flagged');
-            if (cell.classList.contains('flagged')) {
-              const flagImageURL = 'https://static.vecteezy.com/system/resources/previews/010/966/261/original/red-flag-cartoon-free-vector.jpg';
-              cell.style.backgroundImage = `url(${flagImageURL})`; // Change image to flag when flagged
-              cell.style.backgroundSize = 'cover';
-              if (cell.classList.contains('adjacent')) {
-                const mineCountTag = cell.querySelector('.mine-count');
-                mineCountTag.style.color = '#c12028'; // Change text color to red when flagged
-              }
-            } else {
-              cell.style.backgroundColor = ''; // Reset background color when unflagged
-              cell.style.color = '';
-              cell.style.backgroundImage = '';  // Reset background iamge when unflagged
-              if (cell.classList.contains('adjacent')) {
-                const mineCountTag = cell.querySelector('.mine-count');
-                mineCountTag.style.color = ''; // Reset text color when unflagged
-              }
-            }
-            checkWinCondition(); // Check the win condition after each flag operation
-          }
-        });
-        cell.addEventListener('click', function (e) {
-          e.preventDefault(); // Prevent default behavior (for cells with context menu)
-          if (!gameEnded) {
-            if (cell.classList.contains('mine')) {
-              endGame(false);
-              revealMines();
-            } else if (!cell.classList.contains('revealed')) {
-              revealCell(cell);
-            }
-          }
-        });
       }
       gameGrid.appendChild(row);
     }
   }
+
+
   function revealCell(cell) {
     if (!cell.classList.contains('revealed') && !cell.classList.contains('flagged')) {
-      cell.classList.add('revealed');
-  
-      if (cell.classList.contains('adjacent')) {
-        const mineCountTag = cell.querySelector('.mine-count');
-        mineCountTag.classList.add('revealed');
-      } else {
-        revealAdjacentEmptyCells(cell);
-      }
+        cell.classList.add('revealed');
+    
+        if (cell.classList.contains('adjacent')) {
+            const mineCountTag = cell.querySelector('.mine-count');
+            mineCountTag.classList.add('revealed'); // Add this line
+        } else {
+            revealAdjacentEmptyCells(cell);
+        }
     }
-  }
+}
+
   function revealAdjacentEmptyCells(cell) {
     const queue = [];
     queue.push(cell);
@@ -323,7 +344,13 @@ document.addEventListener('DOMContentLoaded', function () {
       revealMines();
       setTimeout(function () {
         alert('Game over! Play again?');
-        location.reload();
+        if (!isLoggedIn)
+          location.reload();
+        else 
+        {
+          removeModal();
+          displayLevelModal();
+        }
       }, 500);
     } else {
       setTimeout(async function () {
@@ -334,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function () {
   
           if (addEntry) {
             const username = prompt('Enter your username:');
-            const difficulty = getDifficulty(); // Add this line
+            const difficulty = getDifficulty();
             if (username && isValidUsername(username)) {
               await addLeaderboardEntry(username, difficulty);
               validUsername = true;
@@ -348,6 +375,16 @@ document.addEventListener('DOMContentLoaded', function () {
   
         location.reload();
       }, 500);
+    }
+  }
+
+  function getDifficulty()
+  {
+    switch (numMines)
+    {
+      case 50: return 'easy';
+      case 75: return 'medium';
+      case 100: return 'easy';
     }
   }
   
@@ -403,21 +440,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
-  function useHint() {
-    if (!gameEnded) {
-      const unrevealedCells = getUnrevealedNonMineCells();
-      if (unrevealedCells.length > 0) {
-        // Pick a random unrevealed non-mine cell
-        const randomIndex = Math.floor(Math.random() * unrevealedCells.length);
-        const randomCell = unrevealedCells[randomIndex];
-        // Reveal the selected cell
-        revealCell(randomCell);
-      } else {
-        // Handle the case when there are no unrevealed non-mine cells
-        window.alert('No unrevealed non-mine cells left.');
-      }
-    }
-  }
+
   // Function to get all unrevealed non-mine cells
   function getUnrevealedNonMineCells() {
     const cells = gameGrid.getElementsByTagName('td');
@@ -491,7 +514,6 @@ function isValidUsername(username) {
     return false;
   }
 
-  // Check if the username contains only alphanumeric characters and underscores
   const validUsernameRegex = /^[a-zA-Z0-9_]+$/;
   return validUsernameRegex.test(username);
 }
@@ -501,7 +523,7 @@ function markAdjacentCells(cellIndex, cells) {
   const numRows = Math.sqrt(cells.length);
   const row = Math.floor(cellIndex / numRows);
   const col = cellIndex % numRows;
-  let mineCount = 0; // Initialize the mine count to 0
+  let mineCount = 0;
   for (let i = -1; i <= 1; i++) {
     for (let j = -1; j <= 1; j++) {
       const adjacentRow = row + i;
