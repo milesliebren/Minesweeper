@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const gameGrid = document.getElementById('game-grid');
   const newGameBtn = document.getElementById('new-game');
   const hintButton = document.getElementById('hint-button');
+  const loginButton = document.getElementById('login-button');
+  const btnTestEndgame = document.getElementById("testEndGame");
+
+  // Display the level modal when the page loads
+  displayLevelModal();
   
   // Function to remove the existing grid
   function removeGrid() {
@@ -59,8 +64,6 @@ document.addEventListener('DOMContentLoaded', function () {
       modal.remove();
     }
   }
-  // Display the level modal when the page loads
-  displayLevelModal();
   function startGame(level) {
     removeModal(); // Remove the level selection modal
     removeGrid(); // Remove the existing grid
@@ -90,6 +93,11 @@ document.addEventListener('DOMContentLoaded', function () {
     displayLevelModal(); // Display the level selection modal
   });
   hintButton.addEventListener('click', useHint);
+  btnTestEndgame.addEventListener("click", function(){
+    testEndGame();
+  });
+  loginButton.addEventListener('click', performLogin);
+
   function generateGrid()
   {
     for (let i = 0; i < gridSize; i++) {
@@ -205,11 +213,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const timerDisplay = document.getElementById('timer');
     timerDisplay.textContent = `Time: ${timeElapsed}s`;
   }
-
-  const btnTestEndgame = document.getElementById("testEndGame");
-  btnTestEndgame.addEventListener("click", function(){
-    testEndGame();
-  })
 
   function testEndGame() {
     const win = confirm('Simulate a win?'); // Ask the user if they want to simulate a win
@@ -407,6 +410,7 @@ function isValidUsername(username) {
   const validUsernameRegex = /^[a-zA-Z0-9_]+$/;
   return validUsernameRegex.test(username);
 }
+
 function markAdjacentCells(cellIndex, cells) {
   const gameGrid = document.getElementById('game-grid');
   const numRows = Math.sqrt(cells.length);
@@ -465,4 +469,9 @@ async function fetchLeaderboard(difficulty, tableBodyId) {
   } catch (error) {
     console.error(`Error fetching ${difficulty} leaderboard:`, error);
   }
+}
+
+async function performLogin()
+{
+  
 }

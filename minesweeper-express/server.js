@@ -28,8 +28,52 @@ const leaderboardEntrySchema = new mongoose.Schema({
   difficulty: String
 });
 
+const userProfileSchema = new mongoose.Schema({
+    username: String,
+    password: String,
+    dateCreated: Date,
+    numWins: Number,
+    bestTimes: {String, Number},
+    sessionID: String,
+});
+
 // Create a mongoose model
 const Leaderboard_Entry = mongoose.model('Leaderboard_Entry', leaderboardEntrySchema);
+const User_Profile = mongoose.model('User_Profile', userProfileSchema);
+
+app.route('api/user-profile')
+.get (async (req, res) => {
+  try {
+    const username = req.query.username || '';
+    const user_profile = await User_Profile.find({username}).sort({numWins: 1}).limit(5);
+    res.json(user_profile);
+  }catch (error)
+  {
+    console.error('Error fetching user profile:', error);
+    res.status(500).send('Internal Server Error');
+  }
+})
+.post(async (req, res) => {
+  try {
+    const { username, password, dateCreated, numWins, bestTimes, sessionID } = req.body;
+
+    // Check if required parameters are present
+    if (!username || !password || !dateCreated || !sessionID) {
+      return res.status(400).send('Bad Request: Missing required parameters');
+    }
+
+    if (isValidUsername(username)) {
+      await profileCreate(username, password, new Date(currentDate), numWins, {}, sessionID);
+      res.status(200).send('Entry added successfully!');
+    } else {
+      res.status(400).send('Bad Request: Invalid username');
+    }
+
+  } catch (error) {
+    console.error('Error adding entry:', error);
+    res.status(500).send('Internal Server Error');
+  }
+})
 
 app.route('/api/leaderboard')
 .get(async (req, res) => {
@@ -83,4 +127,11 @@ async function entryCreate( username, currentDate, elapsedTime, difficulty) {
   const entry = { username, currentDate, elapsedTime, difficulty};
   const newEntry = new Leaderboard_Entry(entry);
   await newEntry.save();
+}
+
+async function profileCreate(username, password, dateCreated, numWins, bestTimes, sessionID)
+{
+  const profile = {username, password, dateCreated, numWins, bestTimes, sessionID};
+  const newProfile = new User_Profile(profile);
+  await newProfile.save();
 }
