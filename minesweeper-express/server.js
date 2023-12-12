@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const bcrypt = require('bcrypt');
 const app = express();
 const port = process.env.PORT || 3000;
 const mongoDB = "mongodb+srv://test:test@leaderboard.o7mtq0w.mongodb.net/";
@@ -20,7 +21,7 @@ async function main() {
   }
 }
 
-// Define the leaderboard entry schema
+
 const leaderboardEntrySchema = new mongoose.Schema({
   username: String,
   currentDate: Date,
@@ -29,51 +30,84 @@ const leaderboardEntrySchema = new mongoose.Schema({
 });
 
 const userProfileSchema = new mongoose.Schema({
-    username: String,
-    password: String,
-    dateCreated: Date,
-    numWins: Number,
-    bestTimes: {String, Number},
-    sessionID: String,
+  username: String,
+  password: String,
+  dateCreated: Date,
+  numWins: Number,
+  bestTimes: [{ difficulty: String, elapsedTime: Number }],
+  sessionID: String,
 });
 
 // Create a mongoose model
 const Leaderboard_Entry = mongoose.model('Leaderboard_Entry', leaderboardEntrySchema);
 const User_Profile = mongoose.model('User_Profile', userProfileSchema);
 
-app.route('api/user-profile')
-.get (async (req, res) => {
+app.route('/api/user-profile')
+.get(async (req, res) => {
   try {
     const username = req.query.username || '';
-    const user_profile = await User_Profile.find({username}).sort({numWins: 1}).limit(5);
-    res.json(user_profile);
-  }catch (error)
-  {
-    console.error('Error fetching user profile:', error);
-    res.status(500).send('Internal Server Error');
-  }
-})
-.post(async (req, res) => {
-  try {
-    const { username, password, dateCreated, numWins, bestTimes, sessionID } = req.body;
-
-    // Check if required parameters are present
-    if (!username || !password || !dateCreated || !sessionID) {
-      return res.status(400).send('Bad Request: Missing required parameters');
-    }
-
-    if (isValidUsername(username)) {
-      await profileCreate(username, password, new Date(currentDate), numWins, {}, sessionID);
-      res.status(200).send('Entry added successfully!');
+    const userExists = await User_Profile.exists({ username });
+    
+    if (userExists) {
+      res.status(200).send('User found');
     } else {
-      res.status(400).send('Bad Request: Invalid username');
+      res.status(404).send('User not found');
     }
-
   } catch (error) {
-    console.error('Error adding entry:', error);
+    console.error('Error checking user profile:', error);
     res.status(500).send('Internal Server Error');
   }
 })
+  .post(async (req, res) => {
+    try {
+      const { username, password, sessionID } = req.body;
+
+      // Check if required parameters are present
+      if (!username || !password || !sessionID) {
+        return res.status(400).send('Bad Request: Missing required parameters');
+      }
+
+      const user = await User_Profile.findOne({ username });
+
+      // Check if the user exists
+      if (user) {
+        return res.status(401).send('Login failed: User already exists');
+      }
+
+      // For development purposes, bypass password hashing
+      // You might want to remove this part in production
+      const hashedPassword = process.env.NODE_ENV !== 'production' ? password : await bcrypt.hash(password, 10);
+
+      // Create a new user profile
+      await profileCreate(username, hashedPassword, new Date(), 0, [], sessionID);
+
+      console.log(`User '${username}' registered successfully`);
+      res.status(200).json({ message: 'Registration successful' });
+    } catch (error) {
+      console.error('Error during registration:', error);
+      res.status(500).send('Internal Server Error');
+    }
+  })
+.put(async (req, res) => {
+  try {
+    const { username, numWins, bestTimes } = req.body;
+
+    // Update user profile with new win and best time
+    const updatedProfile = await User_Profile.findOneAndUpdate(
+      { username: username },
+      {
+        $inc: { numWins: numWins },
+        $push: { bestTimes: bestTimes },
+      },
+      { new: true }
+    );
+
+    res.json(updatedProfile);
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 app.route('/api/leaderboard')
 .get(async (req, res) => {

@@ -1,20 +1,30 @@
 let numMines;
-document.addEventListener('DOMContentLoaded', fetchLeaderboards);
-document.addEventListener('DOMContentLoaded', function () {
-  let gameEnded = false;
-  let timerInterval; // Variable to store the timer interval
-  let timeElapsed = 0; // Variable to store the elapsed time in seconds
-  const gridSize = 25;
-  let numberOfHints = 3; // Add this variable for hint counter
-  const gameGrid = document.getElementById('game-grid');
-  const newGameBtn = document.getElementById('new-game');
-  const hintButton = document.getElementById('hint-button');
-  const loginButton = document.getElementById('login-button');
-  const btnTestEndgame = document.getElementById("testEndGame");
+const gameGrid = document.getElementById('game-grid');
+const newGameBtn = document.getElementById('new-game');
+const hintButton = document.getElementById('hint-button');
+const loginButton = document.getElementById('login-button');
+const btnTestEndgame = document.getElementById("testEndGame");
 
-  // Display the level modal when the page loads
-  displayLevelModal();
-  
+const openLoginModalBtn = document.getElementById('openLoginModal');
+const closeLoginModalBtn = document.getElementById('closeLoginModal');
+const loginModal = document.getElementById('loginModal');
+const submitLoginBtn = document.getElementById('submitLogin');
+const createProfileLink = document.getElementById('createProfileLink');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+
+let gameEnded = false;
+let isLoggedIn = false;
+let timerInterval; // Variable to store the timer interval
+let timeElapsed = 0; // Variable to store the elapsed time in seconds
+const gridSize = 25;
+let numberOfHints = 3; // Add this variable for hint counter
+
+document.addEventListener('DOMContentLoaded', function () {
+
+  promptLogin();
+  fetchLeaderboards();
+
   // Function to remove the existing grid
   function removeGrid() {
     while (gameGrid.firstChild) {
@@ -64,6 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
       modal.remove();
     }
   }
+
   function startGame(level) {
     removeModal(); // Remove the level selection modal
     removeGrid(); // Remove the existing grid
@@ -87,16 +98,101 @@ document.addEventListener('DOMContentLoaded', function () {
     generateGrid();
     placeMines(numMines);
   }
+
+  createProfileLink.addEventListener('click', (event) => {
+    event.preventDefault();
+    const username = prompt('Enter your desired username:');
+    if (isValidUsername(username)) {
+      const password = prompt('Enter your password:');
+      registerUser(username, password);
+    } else {
+      alert('Invalid username. Please enter a valid username.');
+    }
+  });
+
   // Add a click event listener to the "New Game" button
   newGameBtn.addEventListener('click', function () {
-    newGameBtn.style.display = 'none'; // Hide the "New Game" button
-    displayLevelModal(); // Display the level selection modal
+    newGameBtn.style.display = 'none';
+    displayLevelModal();
   });
+
   hintButton.addEventListener('click', useHint);
-  btnTestEndgame.addEventListener("click", function(){
+  btnTestEndgame.addEventListener('click', function () {
     testEndGame();
   });
   loginButton.addEventListener('click', performLogin);
+
+  function promptLogin() {
+    usernameInput.value = '';
+    passwordInput.value = '';
+    loginModal.style.display = 'block';
+  
+    submitLoginBtn.addEventListener('click', async () => {
+      const username = usernameInput.value;
+      const password = passwordInput.value;
+  
+      // Basic validation, you should perform more thorough validation on the server
+      if (!username || !password) {
+        window.alert('Please enter both username and password.');
+        return;
+      }
+  
+      try {
+        // Assuming a server-side endpoint for login, replace with your actual API endpoint
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: username,
+            password: password,
+          }),
+        });
+  
+        if (response.ok) {
+          // Successful login
+          isLoggedIn = true;
+          loginModal.style.display = 'none';
+          removeModal();
+          displayLevelModal();
+        } else {
+          // Failed login
+          window.alert('Invalid username or password. Please try again.');
+          // Optionally, clear the password field
+          passwordInput.value = '';
+        }
+      } catch (error) {
+        console.error('Error during login:', error);
+        window.alert('An error occurred during login. Please try again.');
+      }
+    });
+  }
+
+  async function performLogin() {
+    const username = usernameInput.value;
+    const password = passwordInput.value;
+  
+    // Check if the username is valid
+    if (!isValidUsername(username)) {
+      alert('Invalid username. Please enter a valid username.');
+      return;
+    }
+  
+    // Perform login
+    await loginUser(username, password);
+    
+    if (isLoggedIn) {
+      loginModal.style.display = 'none';
+      removeModal();
+      displayLevelModal();
+    } else {
+      // Reprompt the user for credentials if desired
+      // This can be implemented based on your specific requirements
+      // Currently, it does nothing and closes the modal
+      loginModal.style.display = 'none';
+    }
+  }
 
   function generateGrid()
   {
@@ -221,41 +317,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function endGame(win) {
     gameEnded = true;
-    stopTimer(); // Stop the timer
+    stopTimer();
+  
     if (!win) {
       revealMines();
       setTimeout(function () {
-        window.alert('Game over! Play again?');
-        // Restart the game
+        alert('Game over! Play again?');
         location.reload();
-      }, 500); // Adjust the delay as needed (500 milliseconds in this example)
+      }, 500);
     } else {
-      setTimeout(function () {
+      setTimeout(async function () {
         let validUsername = false;
   
         while (!validUsername) {
           const addEntry = window.confirm('Congratulations! You won! Add Score to Leaderboard?');
   
           if (addEntry) {
-            const username = window.prompt('Enter your username:');
+            const username = prompt('Enter your username:');
+            const difficulty = getDifficulty(); // Add this line
             if (username && isValidUsername(username)) {
-              addLeaderboardEntry(username);
+              await addLeaderboardEntry(username, difficulty);
               validUsername = true;
             } else {
-              window.alert('Invalid username. Please enter a valid username.');
+              alert('Invalid username. Please enter a valid username.');
             }
           } else {
-            validUsername = true; // Break out of the loop if the user chooses not to add to the leaderboard
+            validUsername = true;
           }
         }
   
-        // Restart the game
         location.reload();
-      }, 500); // Adjust the delay as needed (500 milliseconds in this example)
+      }, 500);
     }
   }
   
-  async function addLeaderboardEntry(username) {
+  async function addLeaderboardEntry(username, difficulty) {
     const response = await fetch('/api/leaderboard', {
       method: 'POST',
       headers: {
@@ -265,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function () {
         username: username,
         currentDate: new Date(),
         elapsedTime: timeElapsed,
-        difficulty: getDifficulty(),
+        difficulty: difficulty,
       }),
     });
   
@@ -273,21 +369,7 @@ document.addEventListener('DOMContentLoaded', function () {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
   
-    window.alert('Score added to leaderboard successfully!');
-  }
-
-  function getDifficulty()
-  {
-    switch (numMines) {
-      case 50:
-        return 'easy';
-      case 75:
-        return 'medium';
-      case 100:
-        return 'hard';
-      default:
-        return 'unknown';
-    }
+    alert('Score added to leaderboard successfully!');
   }
   
   function checkWinCondition() {
@@ -376,6 +458,7 @@ document.addEventListener('DOMContentLoaded', function () {
     hintCounter.textContent = `Hints: ${numberOfHints}`;
   }
 });
+
 function placeMines(numberOfMines) {
   const gameGrid = document.getElementById('game-grid');
   const cells = gameGrid.getElementsByTagName('td');
@@ -403,10 +486,12 @@ function placeMines(numberOfMines) {
 }
 
 function isValidUsername(username) {
+  // Check if the username is less than 15 characters
   if (username.length > 14) {
     return false;
   }
 
+  // Check if the username contains only alphanumeric characters and underscores
   const validUsernameRegex = /^[a-zA-Z0-9_]+$/;
   return validUsernameRegex.test(username);
 }
@@ -471,7 +556,50 @@ async function fetchLeaderboard(difficulty, tableBodyId) {
   }
 }
 
-async function performLogin()
-{
-  
+async function registerUser(username, password) {
+  try {
+    const response = await fetch('/api/user-profile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password,
+        sessionID: 'someUniqueSessionID', // You may want to generate a unique session ID
+      }),
+    });
+
+    if (response.ok) {
+      alert('Registration successful!');
+    } else {
+      const errorMessage = await response.text();
+      alert(`Registration failed: ${errorMessage}`);
+    }
+  } catch (error) {
+    console.error('Error during registration:', error);
+    alert('Registration failed: Internal Server Error');
+  }
+}
+
+async function loginUser(username, password) {
+  try {
+    const response = await fetch('/api/user-profile?username=' + encodeURIComponent(username));
+
+    if (response.ok) {
+      const result = await response.text();
+      if (result === 'User found') {
+        // Perform login actions, e.g., show the game grid
+        isLoggedIn = true;
+        alert('Login successful!');
+      } else {
+        alert('Login failed: User not found');
+      }
+    } else {
+      alert('Login failed: Internal Server Error');
+    }
+  } catch (error) {
+    console.error('Error during login:', error);
+    alert('Login failed: Internal Server Error');
+  }
 }
