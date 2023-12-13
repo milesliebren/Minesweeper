@@ -14,6 +14,7 @@ const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
 
 let gameEnded = false;
+let loggedInUsername = null;
 let isLoggedIn = false;
 let timerInterval; // Variable to store the timer interval
 let timeElapsed = 0; // Variable to store the elapsed time in seconds
@@ -170,6 +171,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  closeLoginModalBtn.addEventListener('click', function () {
+    loginModal.style.display = 'none';
+    removeModal();
+    displayLevelModal();
+    isLoggedIn = false; // Set isLoggedIn to false
+  });
+
   hintButton.addEventListener('click', useHint);
   btnTestEndgame.addEventListener('click', function () {
     testEndGame();
@@ -240,6 +248,7 @@ document.addEventListener('DOMContentLoaded', function () {
     await loginUser(username, password);
     
     if (isLoggedIn) {
+      loggedInUsername = username;
       loginModal.style.display = 'none';
       removeModal();
       displayLevelModal();
@@ -336,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function () {
     endGame(win);
   }
 
-  function endGame(win) {
+  async function endGame(win) {
     gameEnded = true;
     stopTimer();
   
@@ -344,15 +353,10 @@ document.addEventListener('DOMContentLoaded', function () {
       revealMines();
       setTimeout(function () {
         alert('Game over! Play again?');
-        if (!isLoggedIn)
-          location.reload();
-        else 
-        {
+        if (!isLoggedIn) location.reload();
+        else {
+          removeModal();
           displayLevelModal();
-          removeGrid();
-          generateGrid();
-          gameEnded = false;
-          initializeGridEventListeners();
         }
       }, 500);
     } else {
@@ -363,13 +367,23 @@ document.addEventListener('DOMContentLoaded', function () {
           const addEntry = window.confirm('Congratulations! You won! Add Score to Leaderboard?');
   
           if (addEntry) {
-            const username = prompt('Enter your username:');
-            const difficulty = getDifficulty();
-            if (username && isValidUsername(username)) {
-              await addLeaderboardEntry(username, difficulty);
+            if (isLoggedIn) {
+              const difficulty = getDifficulty();
+              await addLeaderboardEntry(loggedInUsername, difficulty);
               validUsername = true;
+              gameEnded = false; // Set gameEnded to false
+              displayLevelModal(); // Show the difficulty modal
             } else {
-              alert('Invalid username. Please enter a valid username.');
+              const username = prompt('Enter your username:');
+              const difficulty = getDifficulty();
+              if (username && isValidUsername(username)) {
+                await addLeaderboardEntry(username, difficulty);
+                validUsername = true;
+                gameEnded = false; // Set gameEnded to false
+                displayLevelModal(); // Show the difficulty modal
+              } else {
+                alert('Invalid username. Please enter a valid username.');
+              }
             }
           } else {
             validUsername = true;
