@@ -47,70 +47,70 @@ const Leaderboard_Entry = mongoose.model('Leaderboard_Entry', leaderboardEntrySc
 const User_Profile = mongoose.model('User_Profile', userProfileSchema);
 
 app.route('/api/user-profile')
-.get(async (req, res) => {
-  try {
-    const username = req.query.username || '';
-    const userExists = await User_Profile.exists({ username });
-    
-    if (userExists) {
-      res.status(200).send('User found');
-    } else {
-      res.status(404).send('User not found');
+  .get(async (req, res) => {
+    try {
+      const username = req.query.username || '';
+      const userExists = await User_Profile.exists({ username });
+
+      if (userExists) {
+        res.status(200).send('User found');
+      } else {
+        res.status(404).send('User not found');
+      }
+    } catch (error) {
+      console.error('Error checking user profile:', error);
+      res.status(500).send('Internal Server Error');
     }
-  } catch (error) {
-    console.error('Error checking user profile:', error);
-    res.status(500).send('Internal Server Error');
-  }
-})
-.post(async (req, res) => {
-  try {
-    const { username, password, sessionID } = req.body;
+  })
+  .post(async (req, res) => {
+    try {
+      const { username, password } = req.body;
 
-    // Check if required parameters are present
-    if (!username || !password || !sessionID) {
-      return res.status(400).send('Bad Request: Missing required parameters');
+      // Check if required parameters are present
+      if (!username || !password) {
+        return res.status(400).send('Bad Request: Missing required parameters');
+      }
+
+      const user = await User_Profile.findOne({ username });
+
+      // Check if the user exists
+      if (user) {
+        return res.status(401).send('Login failed: User already exists');
+      }
+
+      // Use bcrypt to hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create a new user profile without sessionID
+      await profileCreate(username, hashedPassword, new Date(), 0, []);
+
+      console.log(`User '${username}' registered successfully`);
+      res.status(200).json({ message: 'Registration successful' });
+    } catch (error) {
+      console.error('Error during registration:', error);
+      res.status(500).send('Internal Server Error');
     }
+  })
+  .put(async (req, res) => {
+    try {
+      const { username, numWins, bestTimes } = req.body;
 
-    const user = await User_Profile.findOne({ username });
+      // Update user profile with new win and best time
+      const updatedProfile = await User_Profile.findOneAndUpdate(
+        { username: username },
+        {
+          $inc: { numWins: numWins },
+          $push: { bestTimes: bestTimes },
+        },
+        { new: true }
+      );
 
-    // Check if the user exists
-    if (user) {
-      return res.status(401).send('Login failed: User already exists');
+      res.json(updatedProfile);
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      res.status(500).send('Internal Server Error');
     }
-
-    // Use bcrypt to hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create a new user profile
-    await profileCreate(username, hashedPassword, new Date(), 0, [], sessionID);
-
-    console.log(`User '${username}' registered successfully`);
-    res.status(200).json({ message: 'Registration successful' });
-  } catch (error) {
-    console.error('Error during registration:', error);
-    res.status(500).send('Internal Server Error');
-  }
-})
-.put(async (req, res) => {
-  try {
-    const { username, numWins, bestTimes } = req.body;
-
-    // Update user profile with new win and best time
-    const updatedProfile = await User_Profile.findOneAndUpdate(
-      { username: username },
-      {
-        $inc: { numWins: numWins },
-        $push: { bestTimes: bestTimes },
-      },
-      { new: true }
-    );
-
-    res.json(updatedProfile);
-  } catch (error) {
-    console.error('Error updating user profile:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+  });
 
 app.route('/api/leaderboard')
 .get(async (req, res) => {
@@ -133,12 +133,38 @@ app.route('/api/leaderboard')
     }
 
     if (isValidUsername(username)) {
+      // Create a new leaderboard entry
       await entryCreate(username, new Date(currentDate), elapsedTime, difficulty);
+
+      // Update the user's profile with the new leaderboard entry
+      const userProfile = await User_Profile.findOne({ username });
+      userProfile.bestTimes.push({
+        difficulty,
+        elapsedTime,
+      });
+
+      // Sort the best times array by time and difficulty
+      userProfile.bestTimes.sort((a, b) => {
+        if (a.elapsedTime !== b.elapsedTime) {
+          return a.elapsedTime - b.elapsedTime;
+        }
+        return a.difficulty.localeCompare(b.difficulty);
+      });
+
+      // Update the user's profile in the database
+      await User_Profile.findOneAndUpdate(
+        { username: username },
+        {
+          $set: {
+            bestTimes: userProfile.bestTimes,
+          },
+        }
+      );
+
       res.status(200).send('Entry added successfully!');
     } else {
       res.status(400).send('Bad Request: Invalid username');
     }
-
   } catch (error) {
     console.error('Error adding entry:', error);
     res.status(500).send('Internal Server Error');
@@ -197,10 +223,24 @@ function isValidUsername(username) {
   return validUsernameRegex.test(username);
 }
 
-async function entryCreate( username, currentDate, elapsedTime, difficulty) {
-  const entry = { username, currentDate, elapsedTime, difficulty};
-  const newEntry = new Leaderboard_Entry(entry);
-  await newEntry.save();
+async function entryCreate(username, currentDate, elapsedTime, difficulty) {
+  try {
+    const userProfile = await User_Profile.findOne({ username });
+    if (userProfile) {
+      const leaderboardEntry = new Leaderboard_Entry({
+        user: userProfile._id,
+        currentDate: currentDate,
+        elapsedTime: elapsedTime,
+        difficulty: difficulty,
+      });
+
+      await leaderboardEntry.save();
+    } else {
+      console.error(`User profile not found for username: ${username}`);
+    }
+  } catch (error) {
+    console.error('Error creating leaderboard entry:', error);
+  }
 }
 
 async function profileCreate(username, password, dateCreated, numWins, bestTimes, sessionID)

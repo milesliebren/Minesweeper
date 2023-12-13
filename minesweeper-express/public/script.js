@@ -14,7 +14,7 @@ const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
 
 let gameEnded = false;
-let loggedInUsername = null;
+let loggedInUser = null;
 let isLoggedIn = false;
 let timerInterval; // Variable to store the timer interval
 let timeElapsed = 0; // Variable to store the elapsed time in seconds
@@ -171,6 +171,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  loginButton.addEventListener('click', function() {
+    if (!isLoggedIn)
+    {
+      location.reload();
+    } else alert("You're already logged in, " + loggedInUser.username + "!");
+  });
+
   closeLoginModalBtn.addEventListener('click', function () {
     loginModal.style.display = 'none';
     removeModal();
@@ -179,10 +186,10 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   hintButton.addEventListener('click', useHint);
+
   btnTestEndgame.addEventListener('click', function () {
     testEndGame();
   });
-  loginButton.addEventListener('click', performLogin);
 
   function promptLogin() {
     usernameInput.value = '';
@@ -218,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
           // Successful login
           isLoggedIn = true;
           loginModal.style.display = 'none';
+          loginUser(username, password);
           removeModal();
           displayLevelModal();
         } else {
@@ -232,30 +240,24 @@ document.addEventListener('DOMContentLoaded', function () {
         window.alert('An error occurred during login. Please try again.');
       }
     });
-}
 
-  async function performLogin() {
-    const username = usernameInput.value;
-    const password = passwordInput.value;
-  
-    // Check if the username is valid
-    if (!isValidUsername(username)) {
-      alert('Invalid username. Please enter a valid username.');
-      return;
-    }
-  
-    // Perform login
-    await loginUser(username, password);
-    
-    if (isLoggedIn) {
-      loggedInUsername = username;
-      loginModal.style.display = 'none';
-      removeModal();
-      displayLevelModal();
-    } else {
-      loginModal.style.display = 'none';
-    }
+
+  console.log('Response:', response);
+
+  if (response.ok) {
+    // Successful login
+    isLoggedIn = true;
+    loginModal.style.display = 'none';
+    removeModal();
+    displayLevelModal();
+  } else {
+    // Failed login
+    console.error('Login failed. Response:', response);
+    window.alert('Invalid username or password. Please try again.');
+    // Optionally, clear the password field
+    passwordInput.value = '';
   }
+}
 
   function generateGrid() {
     for (let i = 0; i < gridSize; i++) {
@@ -348,51 +350,40 @@ document.addEventListener('DOMContentLoaded', function () {
   async function endGame(win) {
     gameEnded = true;
     stopTimer();
-  
-    if (!win) {
+
+    if (!win) { //if lose
       revealMines();
       setTimeout(function () {
         alert('Game over! Play again?');
-        if (!isLoggedIn) location.reload();
-        else {
-          removeModal();
-          displayLevelModal();
-        }
+        softReload();
       }, 500);
-    } else {
+    } else { //if win
       setTimeout(async function () {
-        let validUsername = false;
-  
-        while (!validUsername) {
+
+        if (isLoggedIn) {
           const addEntry = window.confirm('Congratulations! You won! Add Score to Leaderboard?');
-  
           if (addEntry) {
-            if (isLoggedIn) {
-              const difficulty = getDifficulty();
-              await addLeaderboardEntry(loggedInUsername, difficulty);
-              validUsername = true;
-              gameEnded = false; // Set gameEnded to false
-              displayLevelModal(); // Show the difficulty modal
-            } else {
-              const username = prompt('Enter your username:');
-              const difficulty = getDifficulty();
-              if (username && isValidUsername(username)) {
-                await addLeaderboardEntry(username, difficulty);
-                validUsername = true;
-                gameEnded = false; // Set gameEnded to false
-                displayLevelModal(); // Show the difficulty modal
-              } else {
-                alert('Invalid username. Please enter a valid username.');
-              }
+            try
+            {
+              await addLeaderboardEntry(getDifficulty());
             }
-          } else {
-            validUsername = true;
-          }
-        }
-  
-        location.reload();
+              catch (error)
+              {
+                console.error(error);
+              }
+          } 
+        } else alert('You Win! Play Again?');
+        softReload();
       }, 500);
     }
+  }
+
+  function softReload() //display level modal without refreshing i.e. logging out
+  {
+    console.log("Soft Reloading...");
+    gameEnded = false;
+    removeModal();
+    displayLevelModal();
   }
 
   function getDifficulty()
@@ -405,24 +396,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
   
-  async function addLeaderboardEntry(username, difficulty) {
+  async function addLeaderboardEntry(difficulty) {
     const response = await fetch('/api/leaderboard', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        username: username,
+        username: loggedInUser.username,
         currentDate: new Date(),
         elapsedTime: timeElapsed,
         difficulty: difficulty,
       }),
     });
-  
+
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-  
+
     alert('Score added to leaderboard successfully!');
   }
   
@@ -630,6 +621,7 @@ async function loginUser(username, password) {
       if (result === 'User found') {
         // Perform login actions, e.g., show the game grid
         isLoggedIn = true;
+        await performLogin(username, password);
         alert('Login successful!');
       } else {
         alert('Login failed: User not found');
@@ -641,4 +633,17 @@ async function loginUser(username, password) {
     console.error('Error during login:', error);
     alert('Login failed: Internal Server Error');
   }
+}
+
+async function performLogin(username, password) {
+  const response = await fetch('/api/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      username: username,
+      password: password,
+    }),
+  });
 }

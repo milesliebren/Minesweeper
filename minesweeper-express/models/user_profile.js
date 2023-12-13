@@ -6,7 +6,7 @@ const userProfileSchema = new mongoose.Schema({
     dateCreated: { type: Date, required: true },
     numWins: { type: Number, required: false },
     bestTimes: [{ difficulty: String, time: Number }],
-    sessionID: { type: String, required: false }
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User_Profile" }
 });
 
 const User_Profile = mongoose.model("User_Profile", userProfileSchema);

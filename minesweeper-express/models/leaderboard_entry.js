@@ -1,12 +1,8 @@
-const mongoose = require("mongoose");
-
 const leaderboardEntrySchema = new mongoose.Schema({
-  username: { type: String, required: true },
-  currentDate: { type: Date, required: true },
-  elapsedTime: { type: Number, required: true },
-  difficulty: { type: String, required: true}
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User_Profile', required: true }, // Change this line
+  currentDate: Date,
+  elapsedTime: {type: Number, required: true},
+  difficulty: String,
 });
 
-const Leaderboard_Entry = mongoose.model("Leaderboard_Entry", leaderboardEntrySchema);
-
-module.exports = Leaderboard_Entry;
+const Leaderboard_Entry = mongoose.model('Leaderboard_Entry', leaderboardEntrySchema);
