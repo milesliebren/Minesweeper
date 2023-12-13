@@ -99,19 +99,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }),
       });
   
-      console.log('Response:', response); // Add this line for debugging
-  
       if (response.ok) {
         // Successful login
+        const userResponse = await response.json();
+        loggedInUser = userResponse; // Set loggedInUser with user details
         isLoggedIn = true;
-        gameEnded = false;
         loginModal.style.display = 'none';
         removeModal();
         displayLevelModal();
         alert('Login successful!');
       } else {
         // Failed login
-        console.error('Login failed. Response:', response); // Add this line for debugging
+        console.error('Login failed. Response:', response);
         alert('Invalid username or password. Please try again.');
         // Optionally, clear the password field
         passwordInput.value = '';
@@ -232,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
     passwordInput.value = '';
     loginModal.style.display = 'block';
   
-    submitLoginBtn.addEventListener('click', async () => {
+    const loginHandler = async () => {
       const username = usernameInput.value;
       const password = passwordInput.value;
   
@@ -243,7 +242,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
   
       try {
-        // Assuming a server-side endpoint for login, replace with your actual API endpoint
         const response = await fetch('/api/login', {
           method: 'POST',
           headers: {
@@ -257,16 +255,14 @@ document.addEventListener('DOMContentLoaded', function () {
   
         console.log('Response:', response); // Add this line for debugging
   
-        if (response.ok) 
-        {
+        if (response.ok) {
           // Successful login
           isLoggedIn = true;
-          await performLogin(username, password);
-          loggedInUser = { username: username }; // Set loggedInUser
+          loginModal.style.display = 'none';
+          removeModal();
+          displayLevelModal();
           alert('Login successful!');
-        } 
-        else 
-        {
+        } else {
           // Failed login
           console.error('Login failed. Response:', response); // Add this line for debugging
           window.alert('Invalid username or password. Please try again.');
@@ -277,7 +273,10 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('Error during login:', error);
         window.alert('An error occurred during login. Please try again.');
       }
-    });
+    };
+  
+    // Add the new event listener
+    submitLoginBtn.addEventListener('click', loginHandler);
   }
 
   function generateGrid() {
