@@ -408,6 +408,8 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('Error adding leaderboard entry:', error);
         alert('An error occurred while adding the score to the leaderboard.');
       }
+      await fetchLeaderboards();
+      await fetchAndDisplayBestTimes();
     } else {
       alert('Error: User not logged in');
     }
@@ -636,11 +638,11 @@ async function fetchAndDisplayBestTimes() {
   try {
     const response = await fetch('/api/best-times');
 
-    const tableBody = document.getElementById('user-best-times-table-body');
-    tableBody.innerHTML = '';
-
     if (response.ok) {
       const bestTimes = await response.json();
+
+      const tableBody = document.getElementById('user-best-times-table-body');
+      tableBody.innerHTML = '';
 
       if (loggedInUser) {
         if (bestTimes !== null && bestTimes.length > 0) {
@@ -659,7 +661,6 @@ async function fetchAndDisplayBestTimes() {
           const messageRow = tableBody.insertRow();
           const messageCell = messageRow.insertCell(0);
           messageCell.colSpan = 3;
-          messageCell.classList.add('no-entries-message'); // Apply styling class
           messageCell.textContent = "You have not added any leaderboard entries.";
         }
       } else {
@@ -667,15 +668,16 @@ async function fetchAndDisplayBestTimes() {
         const messageRow = tableBody.insertRow();
         const messageCell = messageRow.insertCell(0);
         messageCell.colSpan = 3;
-        messageCell.classList.add('no-entries-message'); // Apply styling class
         messageCell.textContent = "Please log in for best times.";
       }
     } else if (response.status === 401) {
       // Unauthorized access
+      const tableBody = document.getElementById('user-best-times-table-body');
+      tableBody.innerHTML = '';
+
       const messageRow = tableBody.insertRow();
       const messageCell = messageRow.insertCell(0);
       messageCell.colSpan = 3;
-      messageCell.classList.add('no-entries-message'); // Apply styling class
       messageCell.textContent = "You are either not logged in or have not added any leaderboard entries.";
     } else {
       throw new Error(`HTTP error! Status: ${response.status}`);
@@ -691,14 +693,12 @@ async function fetchAndDisplayBestTimes() {
       const messageRow = tableBody.insertRow();
       const messageCell = messageRow.insertCell(0);
       messageCell.colSpan = 3;
-      messageCell.classList.add('no-entries-message'); // Apply styling class
       messageCell.textContent = "An error occurred while fetching your best times.";
     } else {
       // Handle other errors
       const messageRow = tableBody.insertRow();
       const messageCell = messageRow.insertCell(0);
       messageCell.colSpan = 3;
-      messageCell.classList.add('no-entries-message'); // Apply styling class
       messageCell.textContent = "An error occurred while fetching your best times.";
     }
   }

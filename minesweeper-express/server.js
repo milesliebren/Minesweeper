@@ -195,8 +195,7 @@ app.route('/api/login')
 app.route('/api/best-times')
   .get(async (req, res) => {
     try {
-      // Assume you have a middleware to authenticate and extract the username from the request
-      const username = req.username; // Replace with your actual method to get the username
+      const username = req.query.username;
 
       if (!username) {
         return res.status(401).send('Unauthorized: User not logged in');
