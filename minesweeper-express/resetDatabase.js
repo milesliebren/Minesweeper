@@ -25,57 +25,88 @@ const userProfileSchema = new mongoose.Schema({
 
 const User_Profile = mongoose.model('User_Profile', userProfileSchema);
 
-async function resetDatabase() {
+const DIFFICULTIES = ['easy', 'medium', 'hard'];
+
+async function main() {
   try {
-    // Clear all entries from both collections
-    await Leaderboard_Entry.deleteMany({});
-    await User_Profile.deleteMany({});
+    await mongoose.connect("mongodb+srv://test:test@leaderboard.o7mtq0w.mongodb.net/");
+    console.log('Connected to MongoDB');
 
-    console.log('Database cleared.');
+    // Clear existing data
+    await clearDatabase();
 
-    // Repopulate the database with sample data
-    const user1 = await createSampleUser('bob', 'bob');
-    const user2 = await createSampleUser('james', 'james');
+    // Create 10 users with entries
+    const users = [];
+    for (let i = 1; i <= 10; i++) {
+      const username = `user${i}`;
+      const password = await bcrypt.hash(`password${i}`, 10);
 
-    await createLeaderboardEntries(user1, 5);
-    await createLeaderboardEntries(user2, 5);
+      const user = await profileCreate(username, password, new Date(), 0, []);
+      users.push(user);
 
-    console.log('Database repopulated.');
+      // Create 10 entries for each user with random difficulty
+      for (let j = 1; j <= 10; j++) {
+        const currentDate = new Date();
+        const elapsedTime = Math.floor(Math.random() * 1000) + 1; // Random time for demonstration
+        const difficulty = DIFFICULTIES[Math.floor(Math.random() * DIFFICULTIES.length)];
+
+        await entryCreate(user._id, currentDate, elapsedTime, difficulty);
+
+        // Check if the new entry qualifies for the best times
+        const bestTimes = user.bestTimes || [];
+        bestTimes.push({ difficulty, elapsedTime });
+        bestTimes.sort((a, b) => a.elapsedTime - b.elapsedTime);
+        user.bestTimes = bestTimes.slice(0, 3);
+        await user.save();
+      }
+    }
+
+    console.log('Database reset successfully');
   } catch (error) {
-    console.error('Error resetting database:', error);
+    console.error('Error:', error);
   } finally {
     // Close the database connection
-    mongoose.connection.close();
+    await mongoose.connection.close();
+    console.log('Disconnected from MongoDB');
   }
 }
 
-async function createSampleUser(username, password) {
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = new User_Profile({
-    username,
-    password: hashedPassword,
-    dateCreated: new Date(),
-    numWins: 0,
-    bestTimes: [],
-    sessionID: 'someUniqueSessionID',
-  });
+async function clearDatabase() {
+  try {
+    // Clear leaderboard entries
+    await Leaderboard_Entry.deleteMany({});
 
-  return await user.save();
+    // Clear user profiles
+    await User_Profile.deleteMany({});
+  } catch (error) {
+    console.error('Error clearing database:', error);
+  }
 }
 
-async function createLeaderboardEntries(user, count) {
-  const difficulties = ['easy', 'medium', 'hard'];
-
-  for (let i = 0; i < count; i++) {
-    const entry = new Leaderboard_Entry({
-      user: user._id,
-      currentDate: new Date(),
-      elapsedTime: Math.floor(Math.random() * 300) + 60, // Random elapsed time between 60 and 360 seconds
-      difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
+async function entryCreate(userId, currentDate, elapsedTime, difficulty) {
+  try {
+    const leaderboardEntry = new Leaderboard_Entry({
+      user: userId,
+      currentDate: currentDate,
+      elapsedTime: elapsedTime,
+      difficulty: difficulty,
     });
 
-    await entry.save();
+    await leaderboardEntry.save();
+  } catch (error) {
+    console.error('Error creating leaderboard entry:', error);
   }
 }
 
-resetDatabase();
+async function profileCreate(username, password, dateCreated, numWins, bestTimes, sessionID) {
+  try {
+    const profile = { username, password, dateCreated, numWins, bestTimes, sessionID };
+    const newUser = new User_Profile(profile);
+    await newUser.save();
+    return newUser;
+  } catch (error) {
+    console.error('Error creating user profile:', error);
+  }
+}
+
+main();
