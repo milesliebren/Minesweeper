@@ -195,7 +195,9 @@ app.route('/api/login')
 app.route('/api/best-times')
   .get(async (req, res) => {
     try {
-      const username = req.query.username;
+      const username = req.query.user;
+
+      console.log("BT Response: " + username);
 
       if (!username) {
         return res.status(401).send('Unauthorized: User not logged in');

@@ -25,9 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   promptLogin();
   fetchLeaderboards();
-  fetchAndDisplayBestTimes();
 
-  // Function to remove the existing grid
   function removeGrid() {
     while (gameGrid.firstChild) {
       gameGrid.removeChild(gameGrid.firstChild);
@@ -351,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const addEntry = window.confirm('Congratulations! You won! Add Score to Leaderboard?');
           if (addEntry) {
             try {
-              await addLeaderboardEntry(getDifficulty());
+              await addLeaderboardEntry();
               await fetchAndDisplayBestTimes();
             } catch (error) {
               console.error(error);
@@ -371,6 +369,7 @@ document.addEventListener('DOMContentLoaded', function () {
     gameEnded = false;
     removeModal();
     displayLevelModal();
+    fetchAndDisplayBestTimes();
   }
 
   function getDifficulty()
@@ -379,11 +378,11 @@ document.addEventListener('DOMContentLoaded', function () {
     {
       case 50: return 'easy';
       case 75: return 'medium';
-      case 100: return 'easy';
+      case 100: return 'hard';
     }
   }
   
-  async function addLeaderboardEntry(difficulty) {
+  async function addLeaderboardEntry() {
     if (loggedInUser) {
       try {
         const response = await fetch('/api/leaderboard', {
@@ -395,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function () {
             user: { username: loggedInUser }, // Send the user object
             currentDate: new Date(),
             elapsedTime: timeElapsed,
-            difficulty: difficulty,
+            difficulty: getDifficulty(),
           }),
         });
   
@@ -404,6 +403,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
   
         alert('Score added to leaderboard successfully!');
+        console.log('Added leaderboard entry for difficulty ' + difficulty);
       } catch (error) {
         console.error('Error adding leaderboard entry:', error);
         alert('An error occurred while adding the score to the leaderboard.');
@@ -621,6 +621,7 @@ async function loginUser(username, password) {
         // Perform login actions, e.g., show the game grid
         isLoggedIn = true;
         await performLogin(username, password);
+        fetchAndDisplayBestTimes();
         alert('Login successful!');
       } else {
         alert('Login failed: User not found');
@@ -636,72 +637,61 @@ async function loginUser(username, password) {
 
 async function fetchAndDisplayBestTimes() {
   try {
-    const response = await fetch('/api/best-times');
+    if (!loggedInUser) {
+      // If the user is not logged in, display a message
+      const btTableBody = document.getElementById('user-best-times-table-body');
+      btTableBody.innerHTML = '';
+      displayMessage(btTableBody, "Please log in for best times.");
+      return;
+    }
+
+    const response = await fetch(`/api/best-times?user=${loggedInUser}`);
+    const bestTimes = await response.json();
+    const btTableBody = document.getElementById('user-best-times-table-body');
+    btTableBody.innerHTML = '';
 
     if (response.ok) {
-      const bestTimes = await response.json();
-
-      const tableBody = document.getElementById('user-best-times-table-body');
-      tableBody.innerHTML = '';
-
-      if (loggedInUser) {
-        if (bestTimes !== null && bestTimes.length > 0) {
-          bestTimes.forEach((entry, index) => {
-            const row = tableBody.insertRow();
-            const rankCell = row.insertCell(0);
-            const difficultyCell = row.insertCell(1);
-            const timeCell = row.insertCell(2);
-
-            rankCell.textContent = index + 1;
-            difficultyCell.textContent = entry.difficulty;
-            timeCell.textContent = entry.elapsedTime;
-          });
-        } else {
-          // If the user is logged in but has no entries, display a message
-          const messageRow = tableBody.insertRow();
-          const messageCell = messageRow.insertCell(0);
-          messageCell.colSpan = 3;
-          messageCell.textContent = "You have not added any leaderboard entries.";
-        }
-      } else {
-        // If the user is not logged in, display a message
-        const messageRow = tableBody.insertRow();
-        const messageCell = messageRow.insertCell(0);
-        messageCell.colSpan = 3;
-        messageCell.textContent = "Please log in for best times.";
-      }
+      displayBestTimes(bestTimes, btTableBody);
     } else if (response.status === 401) {
-      // Unauthorized access
-      const tableBody = document.getElementById('user-best-times-table-body');
-      tableBody.innerHTML = '';
-
-      const messageRow = tableBody.insertRow();
-      const messageCell = messageRow.insertCell(0);
-      messageCell.colSpan = 3;
-      messageCell.textContent = "You are either not logged in or have not added any leaderboard entries.";
+      displayMessage(btTableBody, "You are either not logged in or have not added any leaderboard entries.");
     } else {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
   } catch (error) {
     console.error('Error fetching and displaying best times:', error);
-
-    const tableBody = document.getElementById('user-best-times-table-body');
-    tableBody.innerHTML = '';
-
-    if (error instanceof SyntaxError) {
-      // Handle the case when the response is not valid JSON
-      const messageRow = tableBody.insertRow();
-      const messageCell = messageRow.insertCell(0);
-      messageCell.colSpan = 3;
-      messageCell.textContent = "An error occurred while fetching your best times.";
-    } else {
-      // Handle other errors
-      const messageRow = tableBody.insertRow();
-      const messageCell = messageRow.insertCell(0);
-      messageCell.colSpan = 3;
-      messageCell.textContent = "An error occurred while fetching your best times.";
-    }
+    handleFetchError('user-best-times-table-body');
   }
+}
+function displayBestTimes(bestTimes, tb) {
+  if (bestTimes !== null && bestTimes.length > 0) {
+    bestTimes.forEach((entry, index) => {
+      const row = tb.insertRow();
+      const rankCell = row.insertCell(0);
+      const difficultyCell = row.insertCell(1);
+      const timeCell = row.insertCell(2);
+
+      rankCell.textContent = index + 1;
+      difficultyCell.textContent = entry.difficulty;
+      timeCell.textContent = entry.elapsedTime;
+    });
+  } else {
+    displayMessage(tb, "You have not added any leaderboard entries.");
+  }
+}
+
+function displayMessage(tableBody, message) {
+  const messageRow = tableBody.insertRow();
+  const messageCell = messageRow.insertCell(0);
+  messageCell.colSpan = 3;
+  messageCell.textContent = message;
+}
+
+function handleFetchError(tableBodyId) {
+  const tableBody = document.getElementById(tableBodyId);
+  tableBody.innerHTML = '';
+
+  const message = "An error occurred while fetching your best times.";
+  displayMessage(tableBody, message);
 }
 
 async function performLogin(username, password) {
