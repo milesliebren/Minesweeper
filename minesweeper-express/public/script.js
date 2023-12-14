@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   promptLogin();
   fetchLeaderboards();
+  fetchAndDisplayUserBestTimes();
 
   // Function to remove the existing grid
   function removeGrid() {
@@ -369,29 +370,28 @@ document.addEventListener('DOMContentLoaded', function () {
   async function endGame(win) {
     gameEnded = true;
     stopTimer();
-
-    if (!win) { //if lose
+  
+    if (!win) {
       revealMines();
       setTimeout(function () {
         alert('Game over! Play again?');
         softReload();
       }, 500);
-    } else { //if win
+    } else {
       setTimeout(async function () {
-
         if (isLoggedIn) {
           const addEntry = window.confirm('Congratulations! You won! Add Score to Leaderboard?');
           if (addEntry) {
-            try
-            {
+            try {
               await addLeaderboardEntry(getDifficulty());
+              await fetchAndDisplayUserBestTimes(); // Fetch and display best times after adding the entry
+            } catch (error) {
+              console.error(error);
             }
-              catch (error)
-              {
-                console.error(error);
-              }
-          } 
-        } else alert('You Win! Play Again?');
+          }
+        } else {
+          alert('You Win! Play Again?');
+        }
         softReload();
       }, 500);
     }
@@ -516,6 +516,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const hintCounter = document.getElementById('hint-counter');
     hintCounter.textContent = `Hints: ${numberOfHints}`;
   }
+
 });
 
 function placeMines(numberOfMines) {
@@ -661,6 +662,56 @@ async function loginUser(username, password) {
   } catch (error) {
     console.error('Error during login:', error);
     alert('Login failed: Internal Server Error');
+  }
+}
+
+async function fetchBestTimes() {
+  const response = await fetch('/api/best-times');
+  return response.json();
+}
+
+function displayBestTimesTable(bestTimes) {
+  const tableBody = document.getElementById('user-best-times-table-body');
+  tableBody.innerHTML = '';
+
+  bestTimes.forEach((entry, index) => {
+    const row = tableBody.insertRow();
+    const rankCell = row.insertCell(0);
+    const difficultyCell = row.insertCell(1);
+    const timeCell = row.insertCell(2);
+
+    rankCell.textContent = index + 1;
+    difficultyCell.textContent = entry.difficulty;
+    timeCell.textContent = entry.elapsedTime;
+  });
+}
+
+async function fetchAndDisplayUserBestTimes() {
+  try {
+    const response = await fetch('/api/best-times');
+    
+    if (response.status === 401) {
+      // Handle unauthorized access (e.g., user not logged in)
+      const tableBody = document.getElementById('user-best-times-table-body');
+      tableBody.innerHTML = '<tr><td colspan="3">You are either not logged in or have not added any leaderboard entries.</td></tr>';
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const bestTimes = await response.json();
+    const tableBody = document.getElementById('user-best-times-table-body');
+
+    if (bestTimes.length > 0) {
+      displayBestTimesTable(bestTimes);
+    } else {
+      // If no entries, display a message
+      tableBody.innerHTML = '<tr><td colspan="3">You have not added any leaderboard entries.</td></tr>';
+    }
+  } catch (error) {
+    console.error('Error fetching and displaying best times:', error);
   }
 }
 

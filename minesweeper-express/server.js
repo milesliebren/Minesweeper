@@ -192,6 +192,33 @@ app.route('/api/login')
   }
 });
 
+app.route('/api/best-times')
+  .get(async (req, res) => {
+    try {
+      // Assume you have a middleware to authenticate and extract the username from the request
+      const username = req.username; // Replace with your actual method to get the username
+
+      if (!username) {
+        return res.status(401).send('Unauthorized: User not logged in');
+      }
+
+      const user = await User_Profile.findOne({ username });
+
+      if (!user) {
+        return res.status(404).send('User not found');
+      }
+
+      // Sort bestTimes and limit to top 3
+      const bestTimes = user.bestTimes || [];
+      const sortedBestTimes = bestTimes.sort((a, b) => a.elapsedTime - b.elapsedTime).slice(0, 3);
+
+      res.json(sortedBestTimes);
+    } catch (error) {
+      console.error('Error fetching best times:', error);
+      res.status(500).send('Internal Server Error');
+    }
+  });
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
