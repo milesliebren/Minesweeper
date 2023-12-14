@@ -270,3 +270,9 @@ h2
   padding: 10px;
   color: gray;
 }
+
+#username-label {
+  font-family: 'Arial', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+}
