@@ -100,9 +100,6 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   
       if (response.ok) {
-        // Successful login
-        const userResponse = await response.json();
-        loggedInUser = userResponse; // Set loggedInUser with user details
         isLoggedIn = true;
         loginModal.style.display = 'none';
         removeModal();
@@ -211,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!isLoggedIn)
     {
       location.reload();
-    } else alert("You're already logged in, " + loggedInUser.username + "!");
+    } else alert("You're already logged in, " + loggedInUser + "!");
   });
 
   closeLoginModalBtn.addEventListener('click', function () {
@@ -258,12 +255,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (response.ok) {
           // Successful login
           isLoggedIn = true;
+          loggedInUser = username;
           loginModal.style.display = 'none';
-          removeModal();
-          displayLevelModal();
+          //performLogin(username, password);
+          softReload();
           alert('Login successful!');
         } else {
           // Failed login
+          isLoggedIn = false;
           console.error('Login failed. Response:', response); // Add this line for debugging
           window.alert('Invalid username or password. Please try again.');
           // Optionally, clear the password field
@@ -418,24 +417,29 @@ document.addEventListener('DOMContentLoaded', function () {
   
   async function addLeaderboardEntry(difficulty) {
     if (loggedInUser) {
-      const response = await fetch('/api/leaderboard', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: loggedInUser.username,
-          currentDate: new Date(),
-          elapsedTime: timeElapsed,
-          difficulty: difficulty,
-        }),
-      });
+      try {
+        const response = await fetch('/api/leaderboard', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: loggedInUser,
+            currentDate: new Date(),
+            elapsedTime: timeElapsed,
+            difficulty: difficulty,
+          }),
+        });
   
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+  
+        alert('Score added to leaderboard successfully!');
+      } catch (error) {
+        console.error('Error adding leaderboard entry:', error);
+        alert('An error occurred while adding the score to the leaderboard.');
       }
-  
-      alert('Score added to leaderboard successfully!');
     } else {
       alert('Error: User not logged in');
     }

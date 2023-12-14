@@ -185,6 +185,7 @@ app.route('/api/login')
 
     // Check if the user exists
     if (!user) {
+      console.error('Bad Request: Missing required parameters', req.body);
       return res.status(401).send('Login failed: User not found');
     }
 
