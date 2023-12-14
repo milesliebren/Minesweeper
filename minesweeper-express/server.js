@@ -27,10 +27,10 @@ async function main() {
 
 
 const leaderboardEntrySchema = new mongoose.Schema({
-  username: String,
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User_Profile', required: true }, // Reference User_Profile model
   currentDate: Date,
-  elapsedTime: Number,
-  difficulty: String
+  elapsedTime: { type: Number, required: true },
+  difficulty: String,
 });
 
 const userProfileSchema = new mongoose.Schema({
@@ -125,46 +125,25 @@ app.route('/api/leaderboard')
 })
 .post(async (req, res) => {
   try {
-    const { username, currentDate, elapsedTime, difficulty } = req.body;
+    const { user, currentDate, elapsedTime, difficulty } = req.body;
 
     // Check if required parameters are present
-    if (!username || !currentDate || !elapsedTime || !difficulty) {
+    if (!user || !currentDate || !elapsedTime || !difficulty) {
       return res.status(400).send('Bad Request: Missing required parameters');
     }
 
-    if (isValidUsername(username)) {
-      // Create a new leaderboard entry
-      await entryCreate(username, new Date(currentDate), elapsedTime, difficulty);
+    const userProfile = await User_Profile.findOne({ username: user.username });
 
-      // Update the user's profile with the new leaderboard entry
-      const userProfile = await User_Profile.findOne({ username });
-      userProfile.bestTimes.push({
-        difficulty,
-        elapsedTime,
-      });
-
-      // Sort the best times array by time and difficulty
-      userProfile.bestTimes.sort((a, b) => {
-        if (a.elapsedTime !== b.elapsedTime) {
-          return a.elapsedTime - b.elapsedTime;
-        }
-        return a.difficulty.localeCompare(b.difficulty);
-      });
-
-      // Update the user's profile in the database
-      await User_Profile.findOneAndUpdate(
-        { username: username },
-        {
-          $set: {
-            bestTimes: userProfile.bestTimes,
-          },
-        }
-      );
-
-      res.status(200).send('Entry added successfully!');
-    } else {
-      res.status(400).send('Bad Request: Invalid username');
+    // Check if the user exists
+    if (!userProfile) {
+      console.error('Bad Request: Missing required parameters', req.body);
+      return res.status(401).send('Login failed: User not found');
     }
+
+    // Create a new leaderboard entry
+    await entryCreate(userProfile._id, new Date(currentDate), elapsedTime, difficulty);
+
+    res.status(200).send('Entry added successfully!');
   } catch (error) {
     console.error('Error adding entry:', error);
     res.status(500).send('Internal Server Error');
@@ -224,21 +203,16 @@ function isValidUsername(username) {
   return validUsernameRegex.test(username);
 }
 
-async function entryCreate(username, currentDate, elapsedTime, difficulty) {
+async function entryCreate(userId, currentDate, elapsedTime, difficulty) {
   try {
-    const userProfile = await User_Profile.findOne({ username });
-    if (userProfile) {
-      const leaderboardEntry = new Leaderboard_Entry({
-        user: userProfile._id,
-        currentDate: currentDate,
-        elapsedTime: elapsedTime,
-        difficulty: difficulty,
-      });
+    const leaderboardEntry = new Leaderboard_Entry({
+      user: userId,
+      currentDate: currentDate,
+      elapsedTime: elapsedTime,
+      difficulty: difficulty,
+    });
 
-      await leaderboardEntry.save();
-    } else {
-      console.error(`User profile not found for username: ${username}`);
-    }
+    await leaderboardEntry.save();
   } catch (error) {
     console.error('Error creating leaderboard entry:', error);
   }

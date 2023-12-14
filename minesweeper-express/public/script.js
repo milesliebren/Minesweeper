@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            username: loggedInUser,
+            user: { username: loggedInUser }, // Send the user object
             currentDate: new Date(),
             elapsedTime: timeElapsed,
             difficulty: difficulty,
