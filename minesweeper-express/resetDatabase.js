@@ -27,6 +27,29 @@ const User_Profile = mongoose.model('User_Profile', userProfileSchema);
 
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
 
+const randomNames = [
+  'Shadow',
+  'Phoenix',
+  'Blaze',
+  'Viper',
+  'Specter',
+  'Raven',
+  'Fury',
+  'Wolf',
+  'Thunder',
+  'Abyss',
+  'Ghost',
+  'Bolt',
+  'Sparrow',
+  'Venom',
+  'Rogue',
+  'Xenon',
+  'Neon',
+  'Havoc',
+  'Quasar',
+  'Orion',
+];
+
 async function main() {
   try {
     await mongoose.connect("mongodb+srv://test:test@leaderboard.o7mtq0w.mongodb.net/");
@@ -35,19 +58,18 @@ async function main() {
     // Clear existing data
     await clearDatabase();
 
-    // Create 10 users with entries
-    const users = [];
-    for (let i = 1; i <= 10; i++) {
-      const username = `user${i}`;
+    // Create 100 users with entries
+    for (let i = 1; i <= 100; i++) {
+      const username = generateRandomUsername();
       const password = await bcrypt.hash(`password${i}`, 10);
 
       const user = await profileCreate(username, password, new Date(), 0, []);
-      users.push(user);
-
-      // Create 10 entries for each user with random difficulty
-      for (let j = 1; j <= 10; j++) {
-        const currentDate = new Date();
-        const elapsedTime = Math.floor(Math.random() * 1000) + 1; // Random time for demonstration
+      
+      // Create 10-20 entries for each user with random difficulty
+      const numEntries = Math.floor(Math.random() * 11) + 10;
+      for (let j = 1; j <= numEntries; j++) {
+        const currentDate = generateRandomDate();
+        const elapsedTime = Math.floor(Math.random() * 975) + 25; // Minimum time of 25 seconds
         const difficulty = DIFFICULTIES[Math.floor(Math.random() * DIFFICULTIES.length)];
 
         await entryCreate(user._id, currentDate, elapsedTime, difficulty);
@@ -69,6 +91,20 @@ async function main() {
     await mongoose.connection.close();
     console.log('Disconnected from MongoDB');
   }
+}
+
+function generateRandomUsername() {
+  const baseName = randomNames[Math.floor(Math.random() * randomNames.length)];
+  const numberSuffix = Math.floor(Math.random() * 1000);
+  return `${baseName}${numberSuffix}`;
+}
+
+function generateRandomDate() {
+  const today = new Date();
+  const randomDaysAgo = Math.floor(Math.random() * 101);
+  const randomDate = new Date(today);
+  randomDate.setDate(today.getDate() - randomDaysAgo);
+  return randomDate;
 }
 
 async function clearDatabase() {

@@ -162,8 +162,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Add a click event listener to the "New Game" button
   newGameBtn.addEventListener('click', function () {
+    stopTimer();
     if (isLoggedIn) {
       newGameBtn.style.display = 'none';
       gameEnded = false;
@@ -593,7 +593,6 @@ async function registerUser(username, password) {
       body: JSON.stringify({
         username: username,
         password: password,
-        sessionID: 'someUniqueSessionID', // You may want to generate a unique session ID
       }),
     });
 
@@ -637,13 +636,13 @@ async function fetchAndDisplayBestTimes() {
   try {
     const response = await fetch('/api/best-times');
 
+    const tableBody = document.getElementById('user-best-times-table-body');
+    tableBody.innerHTML = '';
+
     if (response.ok) {
       const bestTimes = await response.json();
 
-      const tableBody = document.getElementById('user-best-times-table-body');
-      tableBody.innerHTML = '';
-
-      if (isLoggedIn) {
+      if (loggedInUser) {
         if (bestTimes !== null && bestTimes.length > 0) {
           bestTimes.forEach((entry, index) => {
             const row = tableBody.insertRow();
@@ -660,6 +659,7 @@ async function fetchAndDisplayBestTimes() {
           const messageRow = tableBody.insertRow();
           const messageCell = messageRow.insertCell(0);
           messageCell.colSpan = 3;
+          messageCell.classList.add('no-entries-message'); // Apply styling class
           messageCell.textContent = "You have not added any leaderboard entries.";
         }
       } else {
@@ -667,16 +667,15 @@ async function fetchAndDisplayBestTimes() {
         const messageRow = tableBody.insertRow();
         const messageCell = messageRow.insertCell(0);
         messageCell.colSpan = 3;
+        messageCell.classList.add('no-entries-message'); // Apply styling class
         messageCell.textContent = "Please log in for best times.";
       }
     } else if (response.status === 401) {
       // Unauthorized access
-      const tableBody = document.getElementById('user-best-times-table-body');
-      tableBody.innerHTML = '';
-
       const messageRow = tableBody.insertRow();
       const messageCell = messageRow.insertCell(0);
       messageCell.colSpan = 3;
+      messageCell.classList.add('no-entries-message'); // Apply styling class
       messageCell.textContent = "You are either not logged in or have not added any leaderboard entries.";
     } else {
       throw new Error(`HTTP error! Status: ${response.status}`);
@@ -692,12 +691,14 @@ async function fetchAndDisplayBestTimes() {
       const messageRow = tableBody.insertRow();
       const messageCell = messageRow.insertCell(0);
       messageCell.colSpan = 3;
+      messageCell.classList.add('no-entries-message'); // Apply styling class
       messageCell.textContent = "An error occurred while fetching your best times.";
     } else {
       // Handle other errors
       const messageRow = tableBody.insertRow();
       const messageCell = messageRow.insertCell(0);
       messageCell.colSpan = 3;
+      messageCell.classList.add('no-entries-message'); // Apply styling class
       messageCell.textContent = "An error occurred while fetching your best times.";
     }
   }

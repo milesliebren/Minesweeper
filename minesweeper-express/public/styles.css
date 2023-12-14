@@ -233,3 +233,40 @@ h2
   padding-top: 5px;
   border-bottom: darkgrey 1px dashed;
 }
+
+#user-best-times-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: auto;
+  margin-bottom: 20px;
+  background-color: #f2f2f2;
+}
+
+#user-best-times-table th,
+#user-best-times-table td {
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  padding: 10px;
+  background-color: #f2f2f2;
+}
+
+#user-best-times-table th {
+  background-color: #f2f2f2;
+}
+
+#user-best-times-table h2 {
+  background-color: #f2f2f2;
+  color: black;
+  font: bolder italic;
+  margin: auto;
+  margin-top: 10px;
+  padding-bottom: 5px;
+  padding-top: 5px;
+  border-bottom: darkgrey 1px dashed;
+}
+
+#user-best-times-table .no-entries-message {
+  text-align: center;
+  padding: 10px;
+  color: gray;
+}
