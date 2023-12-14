@@ -403,7 +403,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
   
         alert('Score added to leaderboard successfully!');
-        console.log('Added leaderboard entry for difficulty ' + difficulty);
+        console.log('Added leaderboard entry for difficulty ' + getDifficulty());
       } catch (error) {
         console.error('Error adding leaderboard entry:', error);
         alert('An error occurred while adding the score to the leaderboard.');
