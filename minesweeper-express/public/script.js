@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   promptLogin();
   fetchLeaderboards();
-  fetchAndDisplayUserBestTimes();
+  fetchAndDisplayBestTimes();
 
   // Function to remove the existing grid
   function removeGrid() {
@@ -84,38 +84,6 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         }
       });
-    }
-  }
-
-  async function performLogin(username, password) {
-    try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: username,
-          password: password,
-        }),
-      });
-  
-      if (response.ok) {
-        isLoggedIn = true;
-        loginModal.style.display = 'none';
-        removeModal();
-        displayLevelModal();
-        alert('Login successful!');
-      } else {
-        // Failed login
-        console.error('Login failed. Response:', response);
-        alert('Invalid username or password. Please try again.');
-        // Optionally, clear the password field
-        passwordInput.value = '';
-      }
-    } catch (error) {
-      console.error('Error during login:', error);
-      alert('An error occurred during login. Please try again.');
     }
   }
 
@@ -384,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (addEntry) {
             try {
               await addLeaderboardEntry(getDifficulty());
-              await fetchAndDisplayUserBestTimes(); // Fetch and display best times after adding the entry
+              await fetchAndDisplayBestTimes();
             } catch (error) {
               console.error(error);
             }
@@ -665,98 +633,106 @@ async function loginUser(username, password) {
   }
 }
 
-async function fetchBestTimes() {
+async function fetchAndDisplayBestTimes() {
   try {
     const response = await fetch('/api/best-times');
-    
+
     if (response.ok) {
-      return await response.json();
-    } else if (response.status === 401) {
-      // Unauthorized access
-      return null;
-    } else {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-  } catch (error) {
-    console.error('Error fetching best times:', error);
-    throw error;
-  }
-}
-
-function displayBestTimesTable(bestTimes) {
-  const tableBody = document.getElementById('user-best-times-table-body');
-  tableBody.innerHTML = '';
-
-  bestTimes.forEach((entry, index) => {
-    const row = tableBody.insertRow();
-    const rankCell = row.insertCell(0);
-    const difficultyCell = row.insertCell(1);
-    const timeCell = row.insertCell(2);
-
-    rankCell.textContent = index + 1;
-    difficultyCell.textContent = entry.difficulty;
-    timeCell.textContent = entry.elapsedTime;
-  });
-}
-
-async function fetchAndDisplayUserBestTimes() {
-  if (isLoggedIn) {
-    try {
-      const bestTimes = await fetchBestTimes();
+      const bestTimes = await response.json();
 
       const tableBody = document.getElementById('user-best-times-table-body');
       tableBody.innerHTML = '';
 
-      if (bestTimes !== null && bestTimes.length > 0) {
-        bestTimes.forEach((entry, index) => {
-          const row = tableBody.insertRow();
-          const rankCell = row.insertCell(0);
-          const difficultyCell = row.insertCell(1);
-          const timeCell = row.insertCell(2);
+      if (isLoggedIn) {
+        if (bestTimes !== null && bestTimes.length > 0) {
+          bestTimes.forEach((entry, index) => {
+            const row = tableBody.insertRow();
+            const rankCell = row.insertCell(0);
+            const difficultyCell = row.insertCell(1);
+            const timeCell = row.insertCell(2);
 
-          rankCell.textContent = index + 1;
-          difficultyCell.textContent = entry.difficulty;
-          timeCell.textContent = entry.elapsedTime;
-        });
+            rankCell.textContent = index + 1;
+            difficultyCell.textContent = entry.difficulty;
+            timeCell.textContent = entry.elapsedTime;
+          });
+        } else {
+          // If the user is logged in but has no entries, display a message
+          const messageRow = tableBody.insertRow();
+          const messageCell = messageRow.insertCell(0);
+          messageCell.colSpan = 3;
+          messageCell.textContent = "You have not added any leaderboard entries.";
+        }
       } else {
-        // If the user is logged in but has no entries, display a message
+        // If the user is not logged in, display a message
         const messageRow = tableBody.insertRow();
         const messageCell = messageRow.insertCell(0);
         messageCell.colSpan = 3;
-        messageCell.textContent = "You have not added any leaderboard entries.";
+        messageCell.textContent = "Please log in for best times.";
       }
-    } catch (error) {
-      console.error('Error fetching and displaying best times:', error);
+    } else if (response.status === 401) {
+      // Unauthorized access
+      const tableBody = document.getElementById('user-best-times-table-body');
+      tableBody.innerHTML = '';
 
-      if (error instanceof SyntaxError) {
-        // Handle the case when the response is not valid JSON
-        const tableBody = document.getElementById('user-best-times-table-body');
-        tableBody.innerHTML = '';
-
-        const messageRow = tableBody.insertRow();
-        const messageCell = messageRow.insertCell(0);
-        messageCell.colSpan = 3;
-        messageCell.textContent = "An error occurred while fetching your best times.";
-      } else {
-        // Handle other errors
-        const tableBody = document.getElementById('user-best-times-table-body');
-        tableBody.innerHTML = '';
-
-        const messageRow = tableBody.insertRow();
-        const messageCell = messageRow.insertCell(0);
-        messageCell.colSpan = 3;
-        messageCell.textContent = "An error occurred while fetching your best times.";
-      }
+      const messageRow = tableBody.insertRow();
+      const messageCell = messageRow.insertCell(0);
+      messageCell.colSpan = 3;
+      messageCell.textContent = "You are either not logged in or have not added any leaderboard entries.";
+    } else {
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
-  } else {
-    // If the user is not logged in, display a message
+  } catch (error) {
+    console.error('Error fetching and displaying best times:', error);
+
     const tableBody = document.getElementById('user-best-times-table-body');
     tableBody.innerHTML = '';
 
-    const messageRow = tableBody.insertRow();
-    const messageCell = messageRow.insertCell(0);
-    messageCell.colSpan = 3;
-    messageCell.textContent = "You are either not logged in or have not added any leaderboard entries.";
+    if (error instanceof SyntaxError) {
+      // Handle the case when the response is not valid JSON
+      const messageRow = tableBody.insertRow();
+      const messageCell = messageRow.insertCell(0);
+      messageCell.colSpan = 3;
+      messageCell.textContent = "An error occurred while fetching your best times.";
+    } else {
+      // Handle other errors
+      const messageRow = tableBody.insertRow();
+      const messageCell = messageRow.insertCell(0);
+      messageCell.colSpan = 3;
+      messageCell.textContent = "An error occurred while fetching your best times.";
+    }
+  }
+}
+
+async function performLogin(username, password) {
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password,
+      }),
+    });
+
+    if (response.ok) {
+      isLoggedIn = true;
+      loginModal.style.display = 'none';
+      removeModal();
+      displayLevelModal();
+      fetchAndDisplayBestTimes();
+      alert('Login successful!');
+    } else {
+      // Failed login
+      console.error('Login failed. Response:', response);
+      alert('Invalid username or password. Please try again.');
+      // Optionally, clear the password field
+      passwordInput.value = '';
+    }
+  } catch (error) {
+    console.error('Error during login:', error);
+    alert('An error occurred during login. Please try again.');
   }
 }
 
