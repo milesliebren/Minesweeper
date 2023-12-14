@@ -112,43 +112,47 @@ app.route('/api/user-profile')
     }
   });
 
-app.route('/api/leaderboard')
-.get(async (req, res) => {
-  try {
-    const difficulty = req.query.difficulty || '';
-    const leaderboard = await Leaderboard_Entry.find({ difficulty }).sort({ elapsedTime: 1 }).limit(5);
-    res.json(leaderboard);
-  } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    res.status(500).send('Internal Server Error');
-  }
-})
-.post(async (req, res) => {
-  try {
-    const { user, currentDate, elapsedTime, difficulty } = req.body;
+  app.route('/api/leaderboard')
+  .get(async (req, res) => {
+    try {
+      const difficulty = req.query.difficulty || '';
+      const leaderboardEntries = await Leaderboard_Entry.find({ difficulty })
+        .populate('user') // Populate the 'user' field with the corresponding user data
+        .sort({ elapsedTime: 1 })
+        .limit(5);
 
-    // Check if required parameters are present
-    if (!user || !currentDate || !elapsedTime || !difficulty) {
-      return res.status(400).send('Bad Request: Missing required parameters');
+      res.json(leaderboardEntries);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      res.status(500).send('Internal Server Error');
     }
+  })
+  .post(async (req, res) => {
+    try {
+      const { user, currentDate, elapsedTime, difficulty } = req.body;
 
-    const userProfile = await User_Profile.findOne({ username: user.username });
+      // Check if required parameters are present
+      if (!user || !currentDate || !elapsedTime || !difficulty) {
+        return res.status(400).send('Bad Request: Missing required parameters');
+      }
 
-    // Check if the user exists
-    if (!userProfile) {
-      console.error('Bad Request: Missing required parameters', req.body);
-      return res.status(401).send('Login failed: User not found');
+      const userProfile = await User_Profile.findOne({ username: user.username });
+
+      // Check if the user exists
+      if (!userProfile) {
+        console.error('Bad Request: Missing required parameters', req.body);
+        return res.status(401).send('Login failed: User not found');
+      }
+
+      // Create a new leaderboard entry
+      await entryCreate(userProfile._id, new Date(currentDate), elapsedTime, difficulty);
+
+      res.status(200).send('Entry added successfully!');
+    } catch (error) {
+      console.error('Error adding entry:', error);
+      res.status(500).send('Internal Server Error');
     }
-
-    // Create a new leaderboard entry
-    await entryCreate(userProfile._id, new Date(currentDate), elapsedTime, difficulty);
-
-    res.status(200).send('Entry added successfully!');
-  } catch (error) {
-    console.error('Error adding entry:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+  });
 
 app.route('/api/login')
 .post(async (req, res) => {
