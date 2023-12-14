@@ -666,8 +666,21 @@ async function loginUser(username, password) {
 }
 
 async function fetchBestTimes() {
-  const response = await fetch('/api/best-times');
-  return response.json();
+  try {
+    const response = await fetch('/api/best-times');
+    
+    if (response.ok) {
+      return await response.json();
+    } else if (response.status === 401) {
+      // Unauthorized access
+      return null;
+    } else {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error fetching best times:', error);
+    throw error;
+  }
 }
 
 function displayBestTimesTable(bestTimes) {
@@ -687,31 +700,63 @@ function displayBestTimesTable(bestTimes) {
 }
 
 async function fetchAndDisplayUserBestTimes() {
-  try {
-    const response = await fetch('/api/best-times');
-    
-    if (response.status === 401) {
-      // Handle unauthorized access (e.g., user not logged in)
+  if (isLoggedIn) {
+    try {
+      const bestTimes = await fetchBestTimes();
+
       const tableBody = document.getElementById('user-best-times-table-body');
-      tableBody.innerHTML = '<tr><td colspan="3">You are either not logged in or have not added any leaderboard entries.</td></tr>';
-      return;
-    }
+      tableBody.innerHTML = '';
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
+      if (bestTimes !== null && bestTimes.length > 0) {
+        bestTimes.forEach((entry, index) => {
+          const row = tableBody.insertRow();
+          const rankCell = row.insertCell(0);
+          const difficultyCell = row.insertCell(1);
+          const timeCell = row.insertCell(2);
 
-    const bestTimes = await response.json();
+          rankCell.textContent = index + 1;
+          difficultyCell.textContent = entry.difficulty;
+          timeCell.textContent = entry.elapsedTime;
+        });
+      } else {
+        // If the user is logged in but has no entries, display a message
+        const messageRow = tableBody.insertRow();
+        const messageCell = messageRow.insertCell(0);
+        messageCell.colSpan = 3;
+        messageCell.textContent = "You have not added any leaderboard entries.";
+      }
+    } catch (error) {
+      console.error('Error fetching and displaying best times:', error);
+
+      if (error instanceof SyntaxError) {
+        // Handle the case when the response is not valid JSON
+        const tableBody = document.getElementById('user-best-times-table-body');
+        tableBody.innerHTML = '';
+
+        const messageRow = tableBody.insertRow();
+        const messageCell = messageRow.insertCell(0);
+        messageCell.colSpan = 3;
+        messageCell.textContent = "An error occurred while fetching your best times.";
+      } else {
+        // Handle other errors
+        const tableBody = document.getElementById('user-best-times-table-body');
+        tableBody.innerHTML = '';
+
+        const messageRow = tableBody.insertRow();
+        const messageCell = messageRow.insertCell(0);
+        messageCell.colSpan = 3;
+        messageCell.textContent = "An error occurred while fetching your best times.";
+      }
+    }
+  } else {
+    // If the user is not logged in, display a message
     const tableBody = document.getElementById('user-best-times-table-body');
+    tableBody.innerHTML = '';
 
-    if (bestTimes.length > 0) {
-      displayBestTimesTable(bestTimes);
-    } else {
-      // If no entries, display a message
-      tableBody.innerHTML = '<tr><td colspan="3">You have not added any leaderboard entries.</td></tr>';
-    }
-  } catch (error) {
-    console.error('Error fetching and displaying best times:', error);
+    const messageRow = tableBody.insertRow();
+    const messageCell = messageRow.insertCell(0);
+    messageCell.colSpan = 3;
+    messageCell.textContent = "You are either not logged in or have not added any leaderboard entries.";
   }
 }
 
