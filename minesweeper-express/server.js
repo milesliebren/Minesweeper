@@ -130,23 +130,30 @@ app.route('/api/user-profile')
   .post(async (req, res) => {
     try {
       const { user, currentDate, elapsedTime, difficulty } = req.body;
-
+  
       // Check if required parameters are present
       if (!user || !currentDate || !elapsedTime || !difficulty) {
         return res.status(400).send('Bad Request: Missing required parameters');
       }
-
+  
       const userProfile = await User_Profile.findOne({ username: user.username });
-
+  
       // Check if the user exists
       if (!userProfile) {
         console.error('Bad Request: Missing required parameters', req.body);
         return res.status(401).send('Login failed: User not found');
       }
-
+  
       // Create a new leaderboard entry
       await entryCreate(userProfile._id, new Date(currentDate), elapsedTime, difficulty);
-
+  
+      // Update numWins
+      await User_Profile.updateOne({ _id: userProfile._id }, { $inc: { numWins: 1 } });
+  
+      // Update bestTimes if the new entry has a lower time than the current top three
+      const bestTimes = [...userProfile.bestTimes, { difficulty, elapsedTime }].sort((a, b) => a.elapsedTime - b.elapsedTime).slice(0, 3);
+      await User_Profile.updateOne({ _id: userProfile._id }, { bestTimes });
+  
       res.status(200).send('Entry added successfully!');
     } catch (error) {
       console.error('Error adding entry:', error);

@@ -650,6 +650,8 @@ async function fetchAndDisplayBestTimes() {
     const btTableBody = document.getElementById('user-best-times-table-body');
     btTableBody.innerHTML = '';
 
+    console.log("Best Times: " + bestTimes);
+
     if (response.ok) {
       displayBestTimes(bestTimes, btTableBody);
     } else if (response.status === 401) {
