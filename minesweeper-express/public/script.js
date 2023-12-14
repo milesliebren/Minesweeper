@@ -605,7 +605,7 @@ async function fetchLeaderboard(difficulty, tableBodyId) {
       const timeCell = row.insertCell(3);
 
       rankCell.textContent = index + 1;
-      usernameCell.textContent = entry.username;
+      usernameCell.textContent = entry.user.username;
       dateCell.textContent = new Date(entry.currentDate).toLocaleDateString();
       timeCell.textContent = entry.elapsedTime;
     });
