@@ -615,31 +615,6 @@ async function registerUser(username, password) {
   }
 }
 
-// async function loginUser(username, password) {
-//   try {
-//     const userProfileResponse = await fetch('/api/user-profile?username=' + encodeURIComponent(username));
-
-//     if (userProfileResponse.ok) {
-//       const userProfile = await userProfileResponse.json(); // Assuming the response is JSON
-
-//       if (userProfile && userProfile.userFound) {
-//         // Perform login actions, e.g., show the game grid
-//         isLoggedIn = true;
-//         await performLogin(username, password);
-//         fetchAndDisplayBestTimes();
-//         alert('Login successful!');
-//       } else {
-//         alert('Login failed: User not found');
-//       }
-//     } else {
-//       alert('Login failed: Internal Server Error');
-//     }
-//   } catch (error) {
-//     console.error('Error during login:', error);
-//     alert('Login failed: Internal Server Error');
-//   }
-// }
-
 async function fetchAndDisplayBestTimes() {
   try {
     if (!loggedInUser) {
